@@ -1,0 +1,32 @@
+{
+  "name": "memory-store-tracker",
+  "version": "1.0.0",
+  "description": "Intelligent development tracking and context management using memory store for Claude Code",
+  "author": {
+    "name": "Autotelic Team",
+    "email": "developers@autotelic.ai"
+  },
+  "homepage": "https://github.com/autotelic/memory-store-plugin",
+  "repository": "https://github.com/autotelic/memory-store-plugin",
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "tracking",
+    "context",
+    "development-flow",
+    "team-collaboration",
+    "git-analysis",
+    "session-tracking",
+    "knowledge-sharing"
+  ],
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://beta.memory.store/mcp/?token=YOUR_MEMORY_TOKEN_HERE"
+      ]
+    }
+  }
+}

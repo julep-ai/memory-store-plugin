@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://beta.memory.store/mcp/?token=YOUR_MEMORY_TOKEN"
+      ]
+    },
+    "linear": {
+      "command": "npx",
+      "args": [
+        "@linear/mcp-server"
+      ],
+      "env": {
+        "LINEAR_API_KEY": "YOUR_LINEAR_API_KEY"
+      }
+    },
+    "jam": {
+      "command": "npx",
+      "args": [
+        "@jam/mcp-server"
+      ],
+      "env": {
+        "JAM_API_KEY": "YOUR_JAM_API_KEY"
+      }
+    }
+  }
+}
