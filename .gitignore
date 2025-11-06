@@ -20,3 +20,5 @@ Thumbs.db
 /tmp/
 .mcp.json
 .claude-plugin/plugin.json.local
+opencode.json
+.claude/
