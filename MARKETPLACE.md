@@ -198,7 +198,7 @@ Once installed:
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/julep-ai/memory-store-plugin/issues)
-- **Email**: developers@autotelic.ai
+- **Email**: developers@autotelic.inc
 - **Documentation**: [Full README](README.md)
 
 ---

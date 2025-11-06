@@ -4,7 +4,7 @@
   "description": "Intelligent development tracking and context management using memory store for Claude Code",
   "author": {
     "name": "Autotelic Team",
-    "email": "developers@autotelic.ai"
+    "email": "developers@autotelic.inc"
   },
   "homepage": "https://github.com/autotelic/memory-store-plugin",
   "repository": "https://github.com/autotelic/memory-store-plugin",

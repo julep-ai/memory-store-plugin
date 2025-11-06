@@ -2,7 +2,7 @@
   "name": "memory-store-plugins",
   "owner": {
     "name": "Julep AI",
-    "email": "developers@autotelic.ai"
+    "email": "developers@autotelic.inc"
   },
   "metadata": {
     "description": "Official marketplace for Memory Store tracking and development intelligence plugins",
@@ -16,7 +16,7 @@
       "version": "1.0.0",
       "author": {
         "name": "Autotelic Team",
-        "email": "developers@autotelic.ai"
+        "email": "developers@autotelic.inc"
       },
       "homepage": "https://github.com/julep-ai/memory-store-plugin",
       "repository": "https://github.com/julep-ai/memory-store-plugin",

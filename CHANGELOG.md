@@ -198,4 +198,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to this ch
 
 For questions, issues, or feature requests:
 - GitHub Issues: https://github.com/autotelic/memory-store-plugin/issues
-- Email: developers@autotelic.ai
+- Email: developers@autotelic.inc

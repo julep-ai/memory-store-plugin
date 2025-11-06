@@ -201,7 +201,7 @@ chmod +x scripts/*.sh
 ## Need Help?
 
 - **Issues**: [GitHub Issues](https://github.com/autotelic/memory-store-plugin/issues)
-- **Email**: developers@autotelic.ai
+- **Email**: developers@autotelic.inc
 - **Docs**: See README.md
 
 ---
