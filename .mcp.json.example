@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://beta.memory.store/mcp/?token=YOUR_MEMORY_TOKEN_HERE"
+      ]
+    }
+  }
+}

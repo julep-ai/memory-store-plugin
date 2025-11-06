@@ -18,3 +18,5 @@ Thumbs.db
 
 # Temporary files
 /tmp/
+.mcp.json
+.claude-plugin/plugin.json.local
