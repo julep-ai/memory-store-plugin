@@ -50,48 +50,63 @@ A comprehensive Claude Code plugin that automatically tracks your development fl
 
 ## Installation
 
-### Prerequisites
+### Quick Install (Recommended)
 
-- Claude Code installed
-- Memory store MCP server token (get one at [memory.store](https://memory.store))
-- Git repository (recommended but not required)
-
-### Install Plugin
-
-1. Clone or copy this plugin to your project:
+The easiest way to install is via the Claude Code plugin marketplace:
 
 ```bash
-# Clone the plugin into your project
-cd your-project
-git clone https://github.com/autotelic/memory-store-plugin.git
+# Add the marketplace
+/plugin marketplace add julep-ai/memory-store-plugin
 
-# Or copy the plugin directory
-cp -r /path/to/memory-store-plugin ./
+# Install the plugin
+/plugin install memory-store-tracker
 ```
 
-2. Configure your memory token in `.claude-plugin/plugin.json`:
+That's it! See [MARKETPLACE.md](MARKETPLACE.md) for detailed marketplace installation guide.
 
-```json
+### Configure Your Token
+
+After installation, configure your memory store token:
+
+1. Get your token from [memory.store](https://beta.memory.store)
+2. Set it in your environment or local config (never commit tokens!)
+
+```bash
+# Option 1: Environment variable
+export MEMORY_STORE_TOKEN="your-token-here"
+
+# Option 2: Local config (not tracked by git)
+cat > ~/.claude/plugins/memory-store-tracker/.mcp.json.local << EOF
 {
   "mcpServers": {
     "memory": {
       "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://beta.memory.store/mcp/?token=YOUR_TOKEN_HERE"
-      ]
+      "args": ["mcp-remote", "https://beta.memory.store/mcp/?token=YOUR_TOKEN"]
     }
   }
 }
+EOF
 ```
 
-3. Start Claude Code in your project:
+### Alternative: Manual Installation
+
+For development or custom setups:
 
 ```bash
-claude
+git clone https://github.com/julep-ai/memory-store-plugin.git
+/plugin marketplace add ./memory-store-plugin
+/plugin install memory-store-tracker
 ```
 
-The plugin will automatically activate and begin tracking your development!
+### Verify Installation
+
+Test the plugin:
+
+```bash
+/memory-status
+```
+
+You should see session tracking information!
 
 ## Usage
 

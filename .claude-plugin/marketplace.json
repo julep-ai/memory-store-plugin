@@ -1,0 +1,46 @@
+{
+  "name": "memory-store-plugins",
+  "owner": {
+    "name": "Julep AI",
+    "email": "developers@autotelic.ai"
+  },
+  "metadata": {
+    "description": "Official marketplace for Memory Store tracking and development intelligence plugins",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "memory-store-tracker",
+      "source": "./",
+      "description": "Intelligent development tracking and context management using memory store for Claude Code",
+      "version": "1.0.0",
+      "author": {
+        "name": "Autotelic Team",
+        "email": "developers@autotelic.ai"
+      },
+      "homepage": "https://github.com/julep-ai/memory-store-plugin",
+      "repository": "https://github.com/julep-ai/memory-store-plugin",
+      "license": "MIT",
+      "keywords": [
+        "memory",
+        "tracking",
+        "context",
+        "development-flow",
+        "team-collaboration",
+        "git-analysis",
+        "session-tracking",
+        "knowledge-sharing",
+        "feedback",
+        "patterns"
+      ],
+      "category": "productivity",
+      "tags": [
+        "development-intelligence",
+        "team-collaboration",
+        "memory-store",
+        "git-analysis",
+        "context-awareness"
+      ]
+    }
+  ]
+}

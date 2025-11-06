@@ -1,0 +1,61 @@
+name: Validate Plugin
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Validate plugin.json
+      run: |
+        if [ -f .claude-plugin/plugin.json ]; then
+          echo "✓ plugin.json exists"
+          cat .claude-plugin/plugin.json | jq empty && echo "✓ plugin.json is valid JSON" || exit 1
+        else
+          echo "✗ plugin.json not found"
+          exit 1
+        fi
+    
+    - name: Validate marketplace.json
+      run: |
+        if [ -f .claude-plugin/marketplace.json ]; then
+          echo "✓ marketplace.json exists"
+          cat .claude-plugin/marketplace.json | jq empty && echo "✓ marketplace.json is valid JSON" || exit 1
+        else
+          echo "✗ marketplace.json not found"
+          exit 1
+        fi
+    
+    - name: Check for sensitive data
+      run: |
+        if grep -r "token=[a-f0-9]\{64\}" . --exclude-dir=.git; then
+          echo "✗ Found potential token in repository"
+          exit 1
+        else
+          echo "✓ No tokens found"
+        fi
+    
+    - name: Validate script permissions
+      run: |
+        for script in scripts/*.sh; do
+          if [ -x "$script" ]; then
+            echo "✓ $script is executable"
+          else
+            echo "✗ $script is not executable"
+            exit 1
+          fi
+        done
+    
+    - name: Check documentation
+      run: |
+        [ -f README.md ] && echo "✓ README.md exists" || exit 1
+        [ -f MARKETPLACE.md ] && echo "✓ MARKETPLACE.md exists" || exit 1
+        [ -f CHANGELOG.md ] && echo "✓ CHANGELOG.md exists" || exit 1
+        [ -f LICENSE ] && echo "✓ LICENSE exists" || exit 1
