@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Official marketplace for Memory Store tracking and development intelligence plugins",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "memory-store",
       "source": "./",
       "description": "Intelligent development tracking and context management using memory store for Claude Code",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "Autotelic Team",
         "email": "developers@autotelic.inc"

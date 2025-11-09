@@ -1,6 +1,6 @@
 {
   "name": "memory-store",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Intelligent development tracking and context management using memory store for Claude Code",
   "author": {
     "name": "Autotelic Team",
