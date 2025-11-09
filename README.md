@@ -35,6 +35,10 @@ A comprehensive Claude Code plugin that automatically tracks your development fl
 - `/memory-status` - View current tracking status and statistics
 - `/memory-context` - Retrieve relevant context for current work
 - `/memory-overview` - Generate comprehensive project overview
+- `/checkpoint` - Trigger progress validation checkpoint
+- `/correct "explanation"` - Correct Claude's mistakes with high-priority learning
+- `/session-feedback` - View current session quality rating
+- `/validate-changes` - Pre-commit validation with security checks
 
 ### 🎓 Specialized Agent
 - **Memory Tracker Agent**: Deep project analysis and pattern documentation
@@ -48,6 +52,14 @@ A comprehensive Claude Code plugin that automatically tracks your development fl
 - **Deviation warnings**: Alerts when current approach differs from patterns
 - **Proactive suggestions**: Recommends best practices automatically
 
+### 🎯 Interactive Validation & Feedback
+- **Progress Checkpoints**: Auto-validates after every 10 file changes
+- **Pre-commit Validation**: Reviews changes before commits with security checks
+- **Correction System**: Record mistakes with `/correct` for high-priority learning
+- **Session Quality Tracking**: Automatic feedback based on corrections needed
+- **Security Scanning**: Detects potential secrets, tokens, and debug code
+- **Semantic Commit Reminders**: Encourages proper commit message conventions
+
 ## Installation
 
 ### Quick Install (Recommended)
@@ -59,7 +71,7 @@ The easiest way to install is via the Claude Code plugin marketplace:
 /plugin marketplace add julep-ai/memory-store-plugin
 
 # Install the plugin
-/plugin install memory-store-tracker
+/plugin install memory-store
 ```
 
 That's it! See [MARKETPLACE.md](MARKETPLACE.md) for detailed marketplace installation guide.
@@ -76,7 +88,7 @@ After installation, configure your memory store token:
 export MEMORY_STORE_TOKEN="your-token-here"
 
 # Option 2: Local config (not tracked by git)
-cat > ~/.claude/plugins/memory-store-tracker/.mcp.json.local << EOF
+cat > ~/.claude/plugins/memory-store/.mcp.json.local << EOF
 {
   "mcpServers": {
     "memory": {
@@ -95,7 +107,7 @@ For development or custom setups:
 ```bash
 git clone https://github.com/julep-ai/memory-store-plugin.git
 /plugin marketplace add ./memory-store-plugin
-/plugin install memory-store-tracker
+/plugin install memory-store
 ```
 
 ### Verify Installation

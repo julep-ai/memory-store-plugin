@@ -11,7 +11,7 @@ The easiest way to install the Memory Store Tracker plugin is through the Claude
 /plugin marketplace add julep-ai/memory-store-plugin
 
 # Install the plugin
-/plugin install memory-store-tracker
+/plugin install memory-store
 ```
 
 That's it! The plugin is now installed and ready to use.
@@ -33,7 +33,7 @@ After installation, you need to configure your memory store token:
 
 ```bash
 # Navigate to the plugin directory
-cd ~/.claude/plugins/memory-store-tracker
+cd ~/.claude/plugins/memory-store
 
 # Create local config with your token
 cat > .mcp.json.local << EOF
@@ -85,7 +85,7 @@ For team-wide deployment, add the marketplace to your project's `.claude/setting
     }
   },
   "enabledPlugins": [
-    "memory-store-tracker"
+    "memory-store"
   ]
 }
 ```
@@ -104,7 +104,7 @@ git clone https://github.com/julep-ai/memory-store-plugin.git
 /plugin marketplace add ./memory-store-plugin
 
 # Install
-/plugin install memory-store-tracker
+/plugin install memory-store
 ```
 
 ### From Git URL
@@ -114,7 +114,7 @@ git clone https://github.com/julep-ai/memory-store-plugin.git
 /plugin marketplace add https://github.com/julep-ai/memory-store-plugin.git
 
 # Install plugin
-/plugin install memory-store-tracker
+/plugin install memory-store
 ```
 
 ## Marketplace Management
@@ -166,8 +166,8 @@ If the plugin isn't showing up:
 
 3. Try reinstalling:
 ```bash
-/plugin uninstall memory-store-tracker
-/plugin install memory-store-tracker
+/plugin uninstall memory-store
+/plugin install memory-store
 ```
 
 ### Token Configuration Issues
@@ -183,7 +183,7 @@ If hooks aren't working:
 Ensure scripts are executable:
 
 ```bash
-cd ~/.claude/plugins/memory-store-tracker/scripts
+cd ~/.claude/plugins/memory-store/scripts
 chmod +x *.sh
 ```
 
