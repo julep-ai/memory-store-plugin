@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "memory-store-tracker",
+      "name": "memory-store",
       "source": "./",
       "description": "Intelligent development tracking and context management using memory store for Claude Code",
       "version": "1.0.0",
