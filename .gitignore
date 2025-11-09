@@ -1,9 +1,15 @@
 # Session files
 .claude-memory-session
+.claude-session-*
+.claude-memory-*.json
+.claude-memory-*.jsonl
+.claude-checkpoint-*.json
+.claude-commit-validation.txt
 *.tmp
 
 # Local config (contains tokens - DO NOT COMMIT)
 .mcp-extensions.json
+.claude-plugin/plugin.json
 
 # OS files
 .DS_Store
