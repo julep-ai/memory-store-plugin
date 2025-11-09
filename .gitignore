@@ -11,6 +11,10 @@
 .mcp-extensions.json
 .claude-plugin/plugin.json
 
+# Blog posts (added separately)
+BLOG_POST.md
+BLOG_POST_PERSONAL.md
+
 # OS files
 .DS_Store
 Thumbs.db
