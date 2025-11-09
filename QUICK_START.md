@@ -1,6 +1,8 @@
 # Quick Start Guide
 
-Get up and running with the Memory Store Tracker plugin in 5 minutes.
+Get up and running with the Memory Store plugin in 5 minutes.
+
+**What this does:** Gives Claude persistent memory. Correct Claude once with `/correct "explanation"` and it remembers forever. No more repeating the same explanations every session.
 
 ## Installation (2 minutes)
 
@@ -201,6 +203,16 @@ See how errors are handled elsewhere
 
 ## Troubleshooting
 
+**Plugin not loading or initializing?**
+
+Check for duplicate hooks reference:
+```bash
+# This should return NOTHING:
+grep '"hooks"' .claude-plugin/plugin.json.local
+```
+
+If you see `"hooks": "./hooks/hooks.json"`, remove that line. Claude Code automatically discovers hooks - explicit references cause duplication and break initialization.
+
 **Plugin not working?**
 ```bash
 claude --debug
@@ -216,6 +228,11 @@ chmod +x scripts/*.sh
 - Check network connectivity
 - Regenerate token at memory.store
 
+**Common Issues:**
+- ⚠️ **Don't add `"hooks"` field to `plugin.json` or `plugin.json.local`** - hooks are auto-discovered
+- ⚠️ **Keep `.claude-plugin/plugin.json.local` in `.gitignore`** - it contains your token
+- ⚠️ **Scripts must be executable** - run `chmod +x scripts/*.sh`
+
 ## Next Steps
 
 - Read the full [README.md](README.md)
@@ -225,7 +242,7 @@ chmod +x scripts/*.sh
 
 ## Need Help?
 
-- **Issues**: [GitHub Issues](https://github.com/autotelic/memory-store-plugin/issues)
+- **Issues**: [GitHub Issues](https://github.com/julep-ai/memory-store-plugin/issues)
 - **Email**: developers@autotelic.inc
 - **Docs**: See README.md
 

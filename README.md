@@ -1,6 +1,6 @@
-# Memory Store Tracker Plugin for Claude Code
+# Memory Store Plugin for Claude Code
 
-> Intelligent development tracking and context management using memory store
+> Give Claude persistent memory. Stop re-explaining your codebase every session. Claude remembers corrections, patterns, and decisions—learning from mistakes instead of repeating them.
 
 A comprehensive Claude Code plugin that automatically tracks your development flow, captures session context, analyzes git commits, syncs CLAUDE.md files, and maintains team knowledge across projects.
 
@@ -401,6 +401,20 @@ Run `/memory-overview` to:
 
 ### Plugin Not Loading
 
+**Common Issue: Duplicate Hooks Reference**
+
+If the plugin fails to initialize, check for duplicate hooks loading:
+
+```bash
+# This should return NOTHING:
+grep '"hooks"' .claude-plugin/plugin.json
+grep '"hooks"' .claude-plugin/plugin.json.local
+```
+
+If you see `"hooks": "./hooks/hooks.json"`, **remove that line**. Claude Code automatically discovers `hooks/hooks.json` by convention - explicit references cause hooks to load twice and break initialization.
+
+**Other checks:**
+
 1. Check plugin structure:
 ```bash
 ls -la .claude-plugin/
@@ -487,8 +501,8 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/autotelic/memory-store-plugin/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/autotelic/memory-store-plugin/discussions)
+- **Issues**: [GitHub Issues](https://github.com/julep-ai/memory-store-plugin/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/julep-ai/memory-store-plugin/discussions)
 - **Email**: developers@autotelic.inc
 
 ## Changelog

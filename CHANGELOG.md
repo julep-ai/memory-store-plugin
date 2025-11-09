@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2025-11-09
 
+### Fixed
+
+#### Plugin Initialization
+- **Duplicate Hooks Loading** - Removed explicit `"hooks": "./hooks/hooks.json"` reference from plugin manifest
+  - Claude Code automatically discovers and loads `hooks/hooks.json` by convention
+  - Explicit reference caused hooks to be loaded twice, breaking plugin initialization
+  - Fix applies to both `plugin.json` and `plugin.json.local` configurations
+  - **Migration**: If upgrading from earlier versions, remove the `"hooks"` field from your `.claude-plugin/plugin.json.local` file
+
 ### Added
 
 #### Interactive Validation & Feedback
@@ -237,5 +246,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on contributing to this ch
 ## Support
 
 For questions, issues, or feature requests:
-- GitHub Issues: https://github.com/autotelic/memory-store-plugin/issues
+- GitHub Issues: https://github.com/julep-ai/memory-store-plugin/issues
 - Email: developers@autotelic.inc

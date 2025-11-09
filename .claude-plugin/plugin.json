@@ -1,13 +1,13 @@
 {
-  "name": "memory-store-tracker",
-  "version": "1.0.0",
-  "description": "Intelligent development tracking and context management using memory store for Claude Code",
+  "name": "memory-store",
+  "version": "1.1.0",
+  "description": "Gives Claude persistent memory across sessions. Records corrections with /correct, remembers patterns and architecture decisions, loads relevant context automatically. Claude stops forgetting and starts learning from every mistake.",
   "author": {
     "name": "Autotelic Team",
     "email": "developers@autotelic.inc"
   },
-  "homepage": "https://github.com/autotelic/memory-store-plugin",
-  "repository": "https://github.com/autotelic/memory-store-plugin",
+  "homepage": "https://github.com/julep-ai/memory-store-plugin",
+  "repository": "https://github.com/julep-ai/memory-store-plugin",
   "license": "MIT",
   "keywords": [
     "memory",

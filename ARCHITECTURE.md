@@ -245,6 +245,51 @@ Third Implementation
   Auto-suggested for all new work
 ```
 
+## Plugin Configuration
+
+### Hooks Auto-Discovery
+
+Claude Code uses **convention-over-configuration** for plugin hooks:
+
+```
+Project/
+├── .claude-plugin/
+│   ├── plugin.json          # Main manifest (NO hooks field needed)
+│   └── plugin.json.local    # Local config with token (NO hooks field needed)
+├── hooks/
+│   └── hooks.json           # ← Automatically discovered by Claude Code
+├── scripts/
+│   └── *.sh                 # Hook implementation scripts
+```
+
+**Important**: Do NOT add a `"hooks"` field to `plugin.json` or `plugin.json.local`:
+
+```json
+// ❌ WRONG - Causes duplicate loading
+{
+  "name": "memory-store",
+  "hooks": "./hooks/hooks.json",  // ← Remove this!
+  "mcpServers": { ... }
+}
+
+// ✅ CORRECT - Let Claude Code auto-discover
+{
+  "name": "memory-store",
+  "mcpServers": { ... }
+}
+```
+
+**Why?** Claude Code automatically scans for `hooks/hooks.json` in plugin directories. Explicitly referencing it causes hooks to be registered twice, breaking initialization.
+
+**Hook Discovery Process**:
+1. Claude Code starts
+2. Scans all plugin directories
+3. Looks for `hooks/hooks.json` by convention
+4. Loads and registers hooks once
+5. Hooks are ready to fire on events
+
+This follows modern framework patterns (like Next.js auto-discovering routes) - less configuration, cleaner code.
+
 ## Hook Event Details
 
 ### SessionStart Hook

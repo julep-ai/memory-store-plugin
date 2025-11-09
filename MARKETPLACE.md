@@ -1,6 +1,8 @@
 # Plugin Marketplace Installation
 
-The easiest way to install the Memory Store Tracker plugin is through the Claude Code plugin marketplace system.
+The easiest way to install the Memory Store plugin is through the Claude Code plugin marketplace system.
+
+**What this plugin does:** Gives Claude persistent memory across sessions. Claude remembers your corrections (via `/correct`), patterns, architecture decisions, and automatically loads relevant context. No more re-explaining your codebase every day.
 
 ## Quick Install via Marketplace
 
