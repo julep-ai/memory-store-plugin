@@ -104,6 +104,39 @@ log "Type: ${FEEDBACK_TYPE}, Rating: ${RATING}/10"
 # This ensures the feedback is captured even if feedback tool isn't available
 MEMORY_TEXT="Feedback captured: ${FEEDBACK_TYPE} (${RATING}/10) - ${CONTEXT:0:100}"
 
+# Save feedback record for MCP tool
+FEEDBACK_RECORD=$(cat <<EOF
+{
+  "input": "${FEEDBACK_MARKDOWN}",
+  "rating": ${RATING}
+}
+EOF
+)
+
+cat > "${PROJECT_DIR}/.claude-memory-feedback-${TIMESTAMP}.json" <<EOF
+${FEEDBACK_RECORD}
+EOF
+
+# Also create a high-importance memory record for corrections
+if [[ "${FEEDBACK_TYPE}" == "correction" ]] || [[ "${RATING}" -lt 5 ]]; then
+    CORRECTION_MEMORY=$(cat <<EOF
+{
+  "memory": "Correction: ${CONTEXT:0:200}",
+  "background": "Feedback captured at ${TIMESTAMP} in session ${SESSION_ID}. Type: ${FEEDBACK_TYPE}, Rating: ${RATING}/10. This indicates Claude made a mistake that should be learned from. Context: ${CONTEXT}",
+  "importance": "high",
+  "is_resolution": true
+}
+EOF
+)
+
+    echo "${CORRECTION_MEMORY}" > "${PROJECT_DIR}/.claude-memory-correction-${TIMESTAMP}.json"
+
+    # Mark in session file for quality tracking
+    if [[ -n "${CLAUDE_MEMORY_SESSION_FILE}" ]] && [[ -f "${CLAUDE_MEMORY_SESSION_FILE}" ]]; then
+        echo "CORRECTION: ${CONTEXT}" >> "${CLAUDE_MEMORY_SESSION_FILE}"
+    fi
+fi
+
 log "Feedback stored successfully"
 log "This will help improve future responses in similar contexts"
 

@@ -93,18 +93,31 @@ if [[ -n "${PATTERNS_DETECTED}" ]]; then
     MEMORY_TEXT="${MEMORY_TEXT}. Pattern: ${PATTERNS_DETECTED}"
 fi
 
-MEMORY_PAYLOAD=$(cat <<EOF
+MEMORY_RECORD=$(cat <<EOF
 {
   "memory": "${MEMORY_TEXT}",
-  "background": "Session ${SESSION_ID} - File ${REL_PATH} was ${CHANGE_TYPE}. Language: ${FILE_LANG}. Pattern detected: ${PATTERNS_DETECTED}. Project: ${PROJECT_DIR}",
+  "background": "Session ${SESSION_ID} - File ${REL_PATH} was ${CHANGE_TYPE}. Language: ${FILE_LANG}. Pattern detected: ${PATTERNS_DETECTED}. Project: $(basename ${PROJECT_DIR}). Full path: ${PROJECT_DIR}",
   "importance": "low"
 }
 EOF
 )
 
+# Save to session tracking for aggregation
+echo "${MEMORY_RECORD}" >> "${PROJECT_DIR}/.claude-memory-changes.jsonl"
+
 log "Change tracked: ${REL_PATH} (${CHANGE_TYPE})"
 
-# Optional: Analyze file content for patterns
-# This could be enhanced to detect specific coding patterns, imports, etc.
+# Increment change counter for checkpoint detection
+CHANGES_COUNT=$(cat "${PROJECT_DIR}/.claude-session-changes-count" 2>/dev/null || echo "0")
+CHANGES_COUNT=$((CHANGES_COUNT + 1))
+echo "${CHANGES_COUNT}" > "${PROJECT_DIR}/.claude-session-changes-count"
+
+# Check if we should trigger a checkpoint (every 10 changes)
+if [[ $((CHANGES_COUNT % 10)) -eq 0 ]]; then
+    log "Checkpoint threshold reached (${CHANGES_COUNT} changes)"
+    if [[ -f "${CLAUDE_PLUGIN_ROOT}/scripts/progress-checkpoint.sh" ]]; then
+        bash "${CLAUDE_PLUGIN_ROOT}/scripts/progress-checkpoint.sh" &
+    fi
+fi
 
 exit 0
