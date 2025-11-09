@@ -5,6 +5,46 @@ All notable changes to the Memory Store Tracker Plugin will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-11-09
+
+### Added
+
+#### Interactive Validation & Feedback
+- **Progress Checkpoints** - Auto-trigger every 10 file changes for interactive validation
+- **Pre-commit Validation** - Automatic review before commits with security checks
+- **Correction System** - `/correct` command for high-priority mistake recording
+- **Session Quality Tracking** - Automatic rating (0-10) based on corrections needed
+- **Security Scanning** - Detects secrets, tokens, and debug code in commits
+
+#### New Commands
+- `/checkpoint` - Manually trigger progress validation checkpoint
+- `/correct "explanation"` - Record Claude's mistakes as high-priority learnings
+- `/session-feedback` - View current session quality rating and metrics
+- `/validate-changes` - Pre-commit validation with security checks
+
+#### New Scripts
+- `validate-commit.sh` - Pre-commit validation with interactive review
+- `progress-checkpoint.sh` - Auto-triggered progress validation checkpoints
+
+#### Enhanced Scripts
+- `session-start.sh` - Now actually calls memory__record MCP tool
+- `session-end.sh` - Calculates session quality rating and stores comprehensive feedback
+- `track-changes.sh` - Stores memory records and triggers checkpoints every 10 changes
+- `feedback-capture.sh` - Stores corrections via memory__feedback with high importance
+
+#### New Hooks
+- PostToolUse hook for `git add` - Triggers pre-commit validation
+
+### Changed
+- All hook scripts now actually integrate with MCP tools (were preparing data but not storing)
+- Session tracking now includes quality ratings and correction counts
+- Feedback system tracks corrections as high-priority memories with `is_resolution: true`
+
+### Security
+- Added `plugin.json.example` with placeholder token
+- Token file now excluded from git tracking via `.gitignore`
+- Pre-commit validation scans for exposed secrets and tokens
+
 ## [1.0.0] - 2025-01-15
 
 ### Added

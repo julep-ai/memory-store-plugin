@@ -49,6 +49,31 @@ See what's being tracked in your current session.
 Create a new file called test.ts
 ```
 
+The plugin will automatically track your changes. After 10 file operations, you'll see a progress checkpoint asking if things are going well.
+
+### 3. Try Interactive Commands
+
+**Trigger a checkpoint manually:**
+```
+/checkpoint
+```
+
+**Correct Claude if it makes a mistake:**
+```
+/correct "We use OAuth2, not JWT. Decided Nov 6 for better token security."
+```
+
+**View session quality:**
+```
+/session-feedback
+```
+
+**Validate before committing:**
+```
+git add .
+# Pre-commit validation runs automatically, showing security checks
+```
+
 The plugin will automatically track this!
 
 ### 3. View Context
