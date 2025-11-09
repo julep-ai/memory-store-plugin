@@ -19,7 +19,6 @@
     "session-tracking",
     "knowledge-sharing"
   ],
-  "hooks": "./hooks/hooks.json",
   "mcpServers": {
     "memory": {
       "command": "npx",
