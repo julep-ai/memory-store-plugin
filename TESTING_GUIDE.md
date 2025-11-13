@@ -4,21 +4,21 @@
 
 ### Step 1: Uninstall Old Version
 ```bash
-/plugin uninstall memory-store-claude-plugin
+/plugin uninstall memory-store
 ```
 
 Expected: Plugin removed successfully
 
 ### Step 2: Update Marketplace
 ```bash
-/plugin marketplace update memory-store-claude-plugins
+/plugin marketplace update claude-plugin
 ```
 
 Expected: Latest commits pulled from GitHub
 
 ### Step 3: Install New Version
 ```bash
-/plugin install memory-store-claude-plugin
+/plugin install memory-store@claude-plugin
 ```
 
 Expected: v1.2.0 installed with OAuth configuration
@@ -28,7 +28,7 @@ Expected: v1.2.0 installed with OAuth configuration
 /plugin list
 ```
 
-Expected: Shows `memory-store-claude-plugin@memory-store-claude-plugins` as enabled
+Expected: Shows `memory-store@claude-plugin` as enabled
 
 ## Test 2: OAuth Connection
 
@@ -177,7 +177,7 @@ You: "I want to use MongoDB for storing user data"
 
 After all tests:
 
-- [ ] Plugin installs via `/plugin install memory-store-claude-plugin`
+- [ ] Plugin installs via `/plugin install memory-store@claude-plugin`
 - [ ] OAuth authentication works
 - [ ] MCP connection shows ✓ Connected
 - [ ] Hooks fire and output correct JSON
@@ -205,10 +205,10 @@ After all tests:
 /plugin marketplace list
 
 # Update marketplace
-/plugin marketplace update memory-store-claude-plugins
+/plugin marketplace update claude-plugin
 
 # Try again
-/plugin install memory-store-claude-plugin
+/plugin install memory-store@claude-plugin
 ```
 
 ### MCP Not Connected

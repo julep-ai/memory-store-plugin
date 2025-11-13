@@ -1,16 +1,16 @@
 {
-  "name": "memory-store-claude-plugins",
+  "name": "claude-plugin",
   "owner": {
     "name": "Julep AI",
     "email": "developers@autotelic.inc"
   },
   "metadata": {
-    "description": "Official marketplace for Memory Store tracking and development intelligence plugins",
+    "description": "Claude plugins for Memory Store - persistent memory and development intelligence",
     "version": "1.1.0"
   },
   "plugins": [
     {
-      "name": "memory-store-claude-plugin",
+      "name": "memory-store",
       "source": "./",
       "description": "Gives Claude active memory across sessions. Records corrections with /correct, remembers patterns and architecture decisions, loads relevant context automatically. Claude stops forgetting and starts learning from every mistake.",
       "version": "1.1.0",

@@ -13,7 +13,7 @@ The easiest way to install the Memory Store plugin is through the Claude Code pl
 /plugin marketplace add julep-ai/memory-store-plugin
 
 # Install the plugin
-/plugin install memory-store-claude-plugin
+/plugin install memory-store@claude-plugin
 ```
 
 That's it! The plugin is now installed and ready to use.
@@ -86,7 +86,7 @@ git clone https://github.com/julep-ai/memory-store-plugin.git
 /plugin marketplace add ./memory-store-plugin
 
 # Install
-/plugin install memory-store-claude-plugin
+/plugin install memory-store@claude-plugin
 ```
 
 ### From Git URL
@@ -96,7 +96,7 @@ git clone https://github.com/julep-ai/memory-store-plugin.git
 /plugin marketplace add https://github.com/julep-ai/memory-store-plugin.git
 
 # Install plugin
-/plugin install memory-store-claude-plugin
+/plugin install memory-store@claude-plugin
 ```
 
 ## Marketplace Management
@@ -148,8 +148,8 @@ If the plugin isn't showing up:
 
 3. Try reinstalling:
 ```bash
-/plugin uninstall memory-store-claude-plugin
-/plugin install memory-store-claude-plugin
+/plugin uninstall memory-store
+/plugin install memory-store@claude-plugin
 ```
 
 ### Authentication Issues

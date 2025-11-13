@@ -1,5 +1,5 @@
 {
-  "name": "memory-store-claude-plugin",
+  "name": "memory-store",
   "version": "1.1.0",
   "description": "Gives Claude persistent memory across sessions. Records corrections with /correct, remembers patterns and architecture decisions, loads relevant context automatically. Claude stops forgetting and starts learning from every mistake.",
   "author": {
