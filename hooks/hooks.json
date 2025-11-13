@@ -27,6 +27,10 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/track-changes.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/analyze-anchors.sh"
           }
         ]
       },
@@ -45,6 +49,10 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/analyze-commits.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/analyze-ownership.sh"
           }
         ]
       }
@@ -61,11 +69,15 @@
     ],
     "Notification": [
       {
-        "matcher": "error|failed|incorrect|wrong",
+        "matcher": "error|failed|incorrect|wrong|mistake|deprecated|warning",
         "hooks": [
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/feedback-capture.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/auto-feedback.sh"
           }
         ]
       }
