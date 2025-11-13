@@ -4,7 +4,7 @@
 
 A comprehensive Claude Code plugin that automatically tracks your development flow, captures session context, analyzes git commits, and maintains team knowledge across projects.
 
-## Quick Start (5 Minutes)
+## Quick Start (2 Minutes)
 
 ### 1. Install the Plugin
 
@@ -12,19 +12,13 @@ A comprehensive Claude Code plugin that automatically tracks your development fl
 # Add the marketplace
 /plugin marketplace add julep-ai/memory-store-plugin
 
-# Install the plugin
+# Install the plugin (this auto-configures the MCP server!)
 /plugin install memory-store@claude-plugin
 ```
 
-### 2. Connect to Memory Store
+That's it! The plugin automatically connects to Memory Store and will prompt for OAuth authentication on first use.
 
-```bash
-claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
-```
-
-This will open your browser for OAuth authentication. No manual token management needed!
-
-### 3. Start Using It
+### 2. Start Using It
 
 ```bash
 cd your-project
@@ -36,7 +30,7 @@ Check status:
 /memory-status
 ```
 
-That's it! The plugin is now automatically tracking your development session.
+The plugin is now automatically tracking your development session. No additional configuration needed!
 
 ## Features
 
@@ -59,10 +53,10 @@ That's it! The plugin is now automatically tracking your development session.
 - **Convention enforcement**: Helps maintain consistent standards
 
 ### 🤖 Intelligent Context Retrieval
-- **Auto-context awareness**: Claude automatically retrieves relevant past work
-- **Pattern suggestions**: Suggests following established patterns
-- **Decision history**: Provides reasoning behind past technical choices
-- **Team knowledge**: Surfaces insights from other team members
+- **Manual context queries**: Use `/memory-context` to retrieve relevant past work
+- **Pattern awareness**: Query established patterns with `/memory-overview`
+- **Decision history**: Access reasoning behind past technical choices
+- **Team knowledge**: Shared context available across team members
 
 ### 🔧 Custom Slash Commands
 - `/memory-status` - View current tracking status and statistics
@@ -90,12 +84,11 @@ That's it! The plugin is now automatically tracking your development session.
 # Add the marketplace
 /plugin marketplace add julep-ai/memory-store-plugin
 
-# Install the plugin
+# Install the plugin (auto-configures MCP connection)
 /plugin install memory-store@claude-plugin
-
-# Connect to Memory Store
-claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
 ```
+
+The plugin automatically configures the Memory Store MCP server connection and OAuth authentication. No manual setup needed!
 
 ### Alternative Installation Methods
 
