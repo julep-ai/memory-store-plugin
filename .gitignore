@@ -35,3 +35,5 @@ opencode.json
 
 # Test files
 test-hook-trigger.txt
+test-plugin-tracking.ts
+test-files/
