@@ -1,25 +1,63 @@
 ---
-description: Automatically track development context to memory store
+description: Automatically track development context and retrieve relevant memories when needed
 ---
 
 # Memory Auto-Track Skill
 
 ## Purpose
 
-Automatically detect when development events (file changes, commits, sessions) should be stored in persistent memory using the `mcp__memory__record` tool.
+**Bidirectional memory management** for Claude Code:
+1. **Store**: Automatically store development events (file changes, commits, sessions) using `mcp__memory__record`
+2. **Retrieve**: Proactively retrieve relevant context using `mcp__memory__recall` when Claude needs guidance
 
 ## When to Invoke
 
-This skill should activate when you receive `additionalContext` from hooks that contains phrases like:
+### Part 1: Storing Memories (Reactive)
 
+Activate when you receive `additionalContext` from hooks that contains:
 - "Store this in memory"
 - "should be stored in memory using memory__record"
 - "Track this"
-- Contains explicit instructions like "using memory__record with importance: [level]"
+- Explicit instructions like "using memory__record with importance: [level]"
+
+### Part 2: Retrieving Context (Proactive)
+
+**Automatically retrieve memories** when:
+
+1. **User asks about past work**
+   - "What did we do with authentication?"
+   - "How did we implement the API?"
+   - "What patterns have we used?"
+
+2. **Starting new work similar to past work**
+   - User: "Create an API endpoint for users"
+   - You should recall: Past API endpoint implementations, patterns used
+
+3. **When uncertain about project conventions**
+   - Before suggesting an approach, check if similar work exists
+   - Look for established patterns, team decisions
+
+4. **When you might be going off track**
+   - If you're about to suggest something that differs from past patterns
+   - Retrieve context first to ensure consistency
+
+5. **At session start** (optional but helpful)
+   - Retrieve recent work on this project
+   - Load context about the current branch
+   - Understand what was being worked on
+
+**Cues for retrieval:**
+- Project name
+- File/directory names being worked on
+- Technology stack keywords
+- Feature names
+- Problem domain terms
 
 ## What to Do
 
-When this skill activates:
+### For Storing Memories
+
+When storing (reactive to hooks):
 
 1. **Parse the context** to extract:
    - The main memory text (concise summary)
@@ -30,9 +68,39 @@ When this skill activates:
 
 3. **Confirm silently** - No need to tell the user unless there's an error
 
+### For Retrieving Context
+
+When retrieving (proactive for guidance):
+
+1. **Identify what you need to know**:
+   - What patterns exist for this type of work?
+   - How was similar functionality implemented?
+   - What decisions were made about this?
+
+2. **Create search cues** (3-7 relevant terms):
+   ```javascript
+   ["authentication", "API endpoint", "OAuth", "patterns"]
+   ```
+
+3. **Invoke `mcp__memory__recall`** with:
+   - `cues`: Array of search terms
+   - `background`: Context about why you're searching
+   - `k`: Number of results (default 10)
+
+4. **Use the results** to:
+   - Follow established patterns
+   - Reference past decisions
+   - Ensure consistency with team conventions
+   - Provide better, context-aware responses
+
+5. **Mention to user** when using past context:
+   - "Based on our previous work with authentication..."
+   - "Following the API pattern we established in auth.ts..."
+   - "Consistent with the decision we made on 2024-11-01..."
+
 ## Examples
 
-### Example 1: Session Start
+### Example 1: Storing - Session Start
 
 **Input additionalContext:**
 ```
@@ -107,6 +175,88 @@ Look for these patterns in additionalContext:
 2. **Importance level**: Look for "importance: (low|normal|high)"
 3. **Background**: Either explicitly marked as "background: '...'" or the detailed context following the main statement
 
+### Example 4: Retrieving - User Asks About Past Work
+
+**User says:**
+```
+"How did we implement authentication in this project?"
+```
+
+**Action:**
+```javascript
+// Invoke mcp__memory__recall
+{
+  "cues": ["authentication", "implement", "auth", "login", "OAuth"],
+  "background": "User asking about authentication implementation. Need to retrieve past work on auth systems in this project.",
+  "k": 10
+}
+```
+
+**Expected results:**
+- Past commits related to authentication
+- Files that implement auth (auth.ts, login.tsx, etc.)
+- Decisions made about auth approach
+- Patterns used for authentication
+
+**Response to user:**
+```
+Based on our previous work, we implemented OAuth2 authentication.
+See auth.ts:45 where we established the pattern. The flow uses...
+```
+
+### Example 5: Retrieving - Starting Similar Work
+
+**User says:**
+```
+"Create a new API endpoint for user profiles"
+```
+
+**Before implementing, retrieve context:**
+```javascript
+// Invoke mcp__memory__recall
+{
+  "cues": ["API endpoint", "create endpoint", "user", "REST API", "patterns"],
+  "background": "About to create new API endpoint. Need to check existing API patterns and conventions.",
+  "k": 5
+}
+```
+
+**Use results to:**
+- Follow same authentication pattern
+- Use same error handling approach
+- Match existing API structure
+- Maintain consistency
+
+**Response:**
+```
+I'll create the user profiles endpoint following our established API pattern.
+Based on our existing endpoints (like auth.ts), I'll use the same middleware
+structure and error handling...
+```
+
+### Example 6: Retrieving - Avoiding Going Off Track
+
+**Scenario:** Claude is about to suggest using MongoDB, but team uses PostgreSQL
+
+**Before suggesting:**
+```javascript
+// Invoke mcp__memory__recall
+{
+  "cues": ["database", "data storage", "PostgreSQL", "MongoDB", "decision"],
+  "background": "Need to recommend database approach. Checking if team has established database preferences.",
+  "k": 5
+}
+```
+
+**Results show:** "Decision: Use PostgreSQL for ACID compliance (2024-10-15)"
+
+**Corrected response:**
+```
+I'll use PostgreSQL for this, consistent with our team's decision from
+October 2024. This ensures ACID compliance and aligns with our existing
+database infrastructure.
+```
+
 ## Error Handling
 
 If `mcp__memory__record` fails:
@@ -123,9 +273,21 @@ locally and will sync when the connection is restored.
 
 ## Testing
 
-To test this skill:
+**For Storage:**
 1. Make a file change
 2. Hook fires → outputs additionalContext
 3. This skill activates → invokes memory__record
 4. Memory is stored
-5. Can be retrieved later with memory__recall
+
+**For Retrieval:**
+1. Ask Claude about past work: "How did we implement X?"
+2. Skill should invoke memory__recall automatically
+3. Claude uses retrieved context in response
+4. Mentions where pattern/decision came from
+
+**End-to-end test:**
+1. Create file with specific pattern (e.g., API endpoint)
+2. Verify stored via memory__record
+3. Later ask: "How should I create an API endpoint?"
+4. Claude retrieves the pattern and follows it
+5. Consistency maintained! ✅

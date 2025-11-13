@@ -4,17 +4,10 @@
 
 set -euo pipefail
 
-PROJECT_DIR="${PWD}"
-SESSION_ID="${CLAUDE_MEMORY_SESSION_ID:-unknown}"
-SESSION_FILE="${CLAUDE_MEMORY_SESSION_FILE:-}"
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
+SESSION_ID="${MEMORY_SESSION_ID:-unknown}"
 
-# Log function
-log() {
-    echo "[Memory Plugin] $1" >&2
-}
-
-# Get the file path from stdin or environment (passed by Claude Code)
-# This would be provided by the Claude Code hook system
+# Get the file path from tool input (Claude Code provides this)
 FILE_PATH="${1:-}"
 
 if [[ -z "${FILE_PATH}" ]]; then
@@ -23,14 +16,17 @@ if [[ -z "${FILE_PATH}" ]]; then
 fi
 
 if [[ -z "${FILE_PATH}" ]]; then
-    log "No file path provided, skipping tracking"
+    # No file to track, exit silently
+    cat <<EOF
+{
+  "continue": true
+}
+EOF
     exit 0
 fi
 
-log "Tracking changes to: ${FILE_PATH}"
-
 # Get relative path from project root
-REL_PATH=$(realpath --relative-to="${PROJECT_DIR}" "${FILE_PATH}" 2>/dev/null || echo "${FILE_PATH}")
+REL_PATH=$(realpath --relative-to="${PROJECT_DIR}" "${FILE_PATH}" 2>/dev/null || basename "${FILE_PATH}")
 
 # Determine if this is a new file or modification
 if git ls-files --error-unmatch "${FILE_PATH}" > /dev/null 2>&1; then
@@ -52,19 +48,6 @@ case "${FILE_EXT}" in
     *) FILE_LANG="Unknown" ;;
 esac
 
-# Check if this is a CLAUDE.md file
-if [[ "${FILE_PATH}" =~ CLAUDE\.md$ ]] || [[ "${FILE_PATH}" =~ claude\.md$ ]]; then
-    IS_CLAUDE_MD="true"
-    log "CLAUDE.md file modified, triggering sync..."
-    
-    # Trigger CLAUDE.md sync
-    if [[ -f "${CLAUDE_PLUGIN_ROOT}/scripts/sync-claude-md.sh" ]]; then
-        bash "${CLAUDE_PLUGIN_ROOT}/scripts/sync-claude-md.sh" "${FILE_PATH}" &
-    fi
-else
-    IS_CLAUDE_MD="false"
-fi
-
 # Detect patterns (simple heuristics)
 PATTERNS_DETECTED=""
 if [[ "${FILE_PATH}" =~ /api/ ]] || [[ "${FILE_PATH}" =~ /routes/ ]]; then
@@ -77,47 +60,43 @@ elif [[ "${FILE_PATH}" =~ /models/ ]] || [[ "${FILE_PATH}" =~ /entities/ ]]; the
     PATTERNS_DETECTED="Data model"
 elif [[ "${FILE_PATH}" =~ /test/ ]] || [[ "${FILE_PATH}" =~ \.test\. ]] || [[ "${FILE_PATH}" =~ \.spec\. ]]; then
     PATTERNS_DETECTED="Test file"
+elif [[ "${FILE_PATH}" =~ CLAUDE\.md$ ]] || [[ "${FILE_PATH}" =~ claude\.md$ ]]; then
+    PATTERNS_DETECTED="documentation (CLAUDE.md)"
 fi
 
-# Update session file
-if [[ -f "${SESSION_FILE}" ]]; then
-    # Add file to tracked files list
-    jq --arg file "${REL_PATH}" --arg type "${CHANGE_TYPE}" --arg time "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-        '.files_tracked += [{"file": $file, "type": $type, "time": $time}]' \
-        "${SESSION_FILE}" > "${SESSION_FILE}.tmp" && mv "${SESSION_FILE}.tmp" "${SESSION_FILE}"
+# Increment change counter (from environment)
+CHANGES_COUNT=$((${MEMORY_CHANGES_COUNT:-0} + 1))
+
+# Update environment file with new count
+if [[ -n "${CLAUDE_ENV_FILE:-}" ]]; then
+    # Use sed to update the counter or append if not exists
+    if grep -q "MEMORY_CHANGES_COUNT=" "${CLAUDE_ENV_FILE}" 2>/dev/null; then
+        sed -i.bak "s/MEMORY_CHANGES_COUNT=.*/MEMORY_CHANGES_COUNT=${CHANGES_COUNT}/" "${CLAUDE_ENV_FILE}"
+        rm -f "${CLAUDE_ENV_FILE}.bak"
+    else
+        echo "export MEMORY_CHANGES_COUNT=${CHANGES_COUNT}" >> "${CLAUDE_ENV_FILE}"
+    fi
 fi
 
-# Prepare memory record
+# Build memory context
 MEMORY_TEXT="File ${CHANGE_TYPE}: ${REL_PATH} (${FILE_LANG})"
 if [[ -n "${PATTERNS_DETECTED}" ]]; then
     MEMORY_TEXT="${MEMORY_TEXT}. Pattern: ${PATTERNS_DETECTED}"
 fi
 
-MEMORY_RECORD=$(cat <<EOF
+# Check for checkpoint milestone
+CHECKPOINT_MSG=""
+if [[ $((CHANGES_COUNT % 10)) -eq 0 ]]; then
+    CHECKPOINT_MSG="✓ Checkpoint: ${CHANGES_COUNT} files tracked this session"
+fi
+
+# Output JSON to trigger memory storage and show checkpoint
+cat <<EOF
 {
-  "memory": "${MEMORY_TEXT}",
-  "background": "Session ${SESSION_ID} - File ${REL_PATH} was ${CHANGE_TYPE}. Language: ${FILE_LANG}. Pattern detected: ${PATTERNS_DETECTED}. Project: $(basename ${PROJECT_DIR}). Full path: ${PROJECT_DIR}",
-  "importance": "low"
+  "additionalContext": "📝 ${MEMORY_TEXT}. Session: ${SESSION_ID}, Project: $(basename ${PROJECT_DIR}). Store this in memory using memory__record with importance: low, background: 'File ${REL_PATH} was ${CHANGE_TYPE} in session ${SESSION_ID}. Language: ${FILE_LANG}. Pattern: ${PATTERNS_DETECTED}. Change #${CHANGES_COUNT}.'",
+  ${CHECKPOINT_MSG:+"userMessage": "$CHECKPOINT_MSG",}
+  "continue": true
 }
 EOF
-)
-
-# Save to session tracking for aggregation
-echo "${MEMORY_RECORD}" >> "${PROJECT_DIR}/.claude-memory-changes.jsonl"
-
-log "Change tracked: ${REL_PATH} (${CHANGE_TYPE})"
-
-# Increment change counter for checkpoint detection
-CHANGES_COUNT=$(cat "${PROJECT_DIR}/.claude-session-changes-count" 2>/dev/null || echo "0")
-CHANGES_COUNT=$((CHANGES_COUNT + 1))
-echo "${CHANGES_COUNT}" > "${PROJECT_DIR}/.claude-session-changes-count"
-
-# Check if we should trigger a checkpoint (every 10 changes)
-if [[ $((CHANGES_COUNT % 10)) -eq 0 ]]; then
-    log "Checkpoint threshold reached (${CHANGES_COUNT} changes)"
-    if [[ -f "${CLAUDE_PLUGIN_ROOT}/scripts/progress-checkpoint.sh" ]]; then
-        bash "${CLAUDE_PLUGIN_ROOT}/scripts/progress-checkpoint.sh" &
-    fi
-fi
 
 exit 0

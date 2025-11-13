@@ -25,41 +25,21 @@ That's it! The plugin is now installed and ready to use.
 /plugin install julep-ai/memory-store-plugin
 ```
 
-## Configure Your Memory Token
+## Connect to Memory Store
 
-After installation, you need to configure your memory store token:
-
-1. Get your token from [memory.store](https://beta.memory.store)
-
-2. Create a local configuration file (not tracked by git):
+After installation, connect to the memory store server using OAuth authentication:
 
 ```bash
-# Navigate to the plugin directory
-cd ~/.claude/plugins/memory-store
-
-# Create local config with your token
-cat > .mcp.json.local << EOF
-{
-  "mcpServers": {
-    "memory": {
-      "command": "npx",
-      "args": [
-        "mcp-remote",
-        "https://beta.memory.store/mcp/?token=YOUR_ACTUAL_TOKEN_HERE"
-      ]
-    }
-  }
-}
-EOF
+# Add the memory store MCP server (one command!)
+claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
 ```
 
-3. Or use environment variables:
+This will:
+1. Open your browser for authentication
+2. Securely store your credentials via OAuth 2.0
+3. Enable automatic memory tracking across all your projects
 
-```bash
-export MEMORY_STORE_TOKEN="your-token-here"
-```
-
-The plugin will automatically use your configured token.
+**No manual token configuration needed!** Authentication is handled automatically through your browser.
 
 ## Verify Installation
 
@@ -172,13 +152,14 @@ If the plugin isn't showing up:
 /plugin install memory-store
 ```
 
-### Token Configuration Issues
+### Authentication Issues
 
-If hooks aren't working:
+If the plugin isn't working:
 
-1. Check token is configured (see Configure Your Memory Token above)
-2. Verify `.mcp.json.local` exists in plugin directory
-3. Restart Claude Code
+1. Verify MCP server is connected: `claude mcp list`
+2. Re-authenticate if needed: `claude mcp remove memory-store && claude mcp add --transport http memory-store "https://beta.memory.store/mcp"`
+3. Check that OAuth authentication completed in browser
+4. Restart Claude Code
 
 ### Permission Issues
 

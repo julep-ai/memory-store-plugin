@@ -488,12 +488,14 @@ hook-script.sh &  # Runs in background
 
 ## Security
 
-### Token Management
+### Authentication
 
-- Tokens stored in plugin config
-- Not committed to git (in .gitignore)
-- Team members use individual tokens
-- Tokens never logged
+- **OAuth 2.0 Authentication**: Browser-based authentication flow
+- **Secure Credential Storage**: Credentials stored by Claude Code, never in plugin files
+- **Automatic Token Refresh**: Claude Code handles token lifecycle automatically
+- **No Manual Token Management**: Users authenticate via browser, no copying/pasting tokens
+- **Per-User Authentication**: Each team member authenticates with their own account
+- **Zero Config Files**: No sensitive data in configuration files
 
 ### Script Safety
 

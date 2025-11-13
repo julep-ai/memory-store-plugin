@@ -6,32 +6,25 @@ Get up and running with the Memory Store plugin in 5 minutes.
 
 ## Installation (2 minutes)
 
-1. **Get your memory token** from [memory.store](https://beta.memory.store)
+1. **Install the plugin**
+   ```bash
+   /plugin marketplace add julep-ai/memory-store-plugin
+   /plugin install memory-store
+   ```
 
-2. **Navigate to your project**
+2. **Connect to Memory Store** (one command!)
+   ```bash
+   claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
+   ```
+
+   This will:
+   - Open your browser for authentication
+   - Securely store your credentials
+   - Enable automatic memory tracking
+
+3. **Navigate to your project and start Claude Code**
    ```bash
    cd your-project
-   ```
-
-3. **Configure the token**
-   
-   Edit `.claude-plugin/plugin.json` and add your token:
-   ```json
-   {
-     "mcpServers": {
-       "memory": {
-         "command": "npx",
-         "args": [
-           "mcp-remote",
-           "https://beta.memory.store/mcp/?token=YOUR_TOKEN_HERE"
-         ]
-       }
-     }
-   }
-   ```
-
-4. **Start Claude Code**
-   ```bash
    claude
    ```
 
@@ -223,14 +216,14 @@ claude --debug
 chmod +x scripts/*.sh
 ```
 
-**Token issues?**
-- Verify token in `.claude-plugin/plugin.json`
+**Connection issues?**
+- Check MCP server status: `claude mcp list`
+- Re-authenticate if needed: `claude mcp remove memory-store && claude mcp add --transport http memory-store "https://beta.memory.store/mcp"`
 - Check network connectivity
-- Regenerate token at memory.store
 
 **Common Issues:**
 - ⚠️ **Don't add `"hooks"` field to `plugin.json` or `plugin.json.local`** - hooks are auto-discovered
-- ⚠️ **Keep `.claude-plugin/plugin.json.local` in `.gitignore`** - it contains your token
+- ⚠️ **OAuth authentication required** - run the `claude mcp add` command to authenticate via browser
 - ⚠️ **Scripts must be executable** - run `chmod +x scripts/*.sh`
 
 ## Next Steps

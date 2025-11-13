@@ -3,9 +3,14 @@
     "memory": {
       "command": "npx",
       "args": [
+        "-y",
         "mcp-remote",
-        "https://beta.memory.store/mcp/?token=YOUR_MEMORY_TOKEN_HERE"
-      ]
+        "https://beta.memory.store/mcp"
+      ],
+      "oauth": {
+        "enabled": true,
+        "discovery_url": "https://beta.memory.store/.well-known/oauth-protected-resource"
+      }
     }
   }
 }

@@ -32,3 +32,6 @@ Thumbs.db
 .claude-plugin/plugin.json.local
 opencode.json
 .claude/
+
+# Test files
+test-hook-trigger.txt

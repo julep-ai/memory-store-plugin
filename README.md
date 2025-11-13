@@ -76,29 +76,21 @@ The easiest way to install is via the Claude Code plugin marketplace:
 
 That's it! See [MARKETPLACE.md](MARKETPLACE.md) for detailed marketplace installation guide.
 
-### Configure Your Token
+### Configure Memory Store Connection
 
-After installation, configure your memory store token:
-
-1. Get your token from [memory.store](https://beta.memory.store)
-2. Set it in your environment or local config (never commit tokens!)
+After installation, connect to the memory store server:
 
 ```bash
-# Option 1: Environment variable
-export MEMORY_STORE_TOKEN="your-token-here"
-
-# Option 2: Local config (not tracked by git)
-cat > ~/.claude/plugins/memory-store/.mcp.json.local << EOF
-{
-  "mcpServers": {
-    "memory": {
-      "command": "npx",
-      "args": ["mcp-remote", "https://beta.memory.store/mcp/?token=YOUR_TOKEN"]
-    }
-  }
-}
-EOF
+# Add the memory store MCP server (one command!)
+claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
 ```
+
+This will:
+1. Open your browser for authentication
+2. Securely store your credentials
+3. Enable automatic memory tracking
+
+**Note**: Authentication uses OAuth 2.0 - no manual token management needed! Your credentials are stored securely by Claude Code and automatically refreshed.
 
 ### Alternative: Manual Installation
 
@@ -352,8 +344,9 @@ The plugin enables powerful knowledge sharing:
 If your team works on multiple related projects:
 
 1. Install the plugin in each project
-2. Use the same memory store token
+2. Authenticate once with the same memory store account
 3. The Memory Tracker Agent can analyze cross-repo relationships
+4. All projects share the same memory context automatically
 
 ## Best Practices
 
@@ -449,12 +442,19 @@ bash scripts/session-start.sh
 
 ### Memory Store Connection Issues
 
-1. Verify your token is correct in `.claude-plugin/plugin.json`
-2. Check network connectivity
-3. Test MCP server directly:
+1. Check MCP server status:
 ```bash
-npx mcp-remote https://beta.memory.store/mcp/?token=YOUR_TOKEN
+claude mcp list
 ```
+
+2. Re-authenticate if needed:
+```bash
+claude mcp remove memory-store
+claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
+```
+
+3. Check network connectivity
+4. Verify OAuth authentication completed successfully (check browser)
 
 ## Development
 
