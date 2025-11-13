@@ -1,5 +1,5 @@
 {
-  "name": "memory-store-plugins",
+  "name": "memory-store-claude-plugins",
   "owner": {
     "name": "Julep AI",
     "email": "developers@autotelic.inc"
@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "memory-store",
+      "name": "memory-store-claude-plugin",
       "source": "./",
       "description": "Gives Claude active memory across sessions. Records corrections with /correct, remembers patterns and architecture decisions, loads relevant context automatically. Claude stops forgetting and starts learning from every mistake.",
       "version": "1.1.0",

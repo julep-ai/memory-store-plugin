@@ -9,7 +9,7 @@ Get up and running with the Memory Store plugin in 5 minutes.
 1. **Install the plugin**
    ```bash
    /plugin marketplace add julep-ai/memory-store-plugin
-   /plugin install memory-store
+   /plugin install memory-store-claude-plugin
    ```
 
 2. **Connect to Memory Store** (one command!)

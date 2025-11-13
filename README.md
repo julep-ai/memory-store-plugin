@@ -71,7 +71,7 @@ The easiest way to install is via the Claude Code plugin marketplace:
 /plugin marketplace add julep-ai/memory-store-plugin
 
 # Install the plugin
-/plugin install memory-store
+/plugin install memory-store-claude-plugin
 ```
 
 That's it! See [MARKETPLACE.md](MARKETPLACE.md) for detailed marketplace installation guide.
@@ -99,7 +99,7 @@ For development or custom setups:
 ```bash
 git clone https://github.com/julep-ai/memory-store-plugin.git
 /plugin marketplace add ./memory-store-plugin
-/plugin install memory-store
+/plugin install memory-store-claude-plugin
 ```
 
 ### Verify Installation
