@@ -43,6 +43,13 @@ SESSION_SUMMARY="Session completed: ${DURATION_HUMAN} duration, ${FILES_TRACKED}
 END_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 BACKGROUND_CONTEXT="Session ${SESSION_ID} ended at ${END_TIME} in project ${PROJECT_NAME} on branch ${GIT_BRANCH}. Duration: ${DURATION_HUMAN}. Files tracked: ${FILES_TRACKED}. Commits analyzed: ${COMMITS_ANALYZED}. Modified files still pending: ${MODIFIED_FILES}. This session's learnings should inform future work on similar features."
 
+# Clean up temporary tracking files (they've already been synced to cloud)
+rm -f "${PROJECT_DIR}/.claude-memory-changes.jsonl" \
+      "${PROJECT_DIR}/.claude-session-changes-count" \
+      "${PROJECT_DIR}/.claude-memory-record-request.json" \
+      "${PROJECT_DIR}/.claude-memory-session-end.json" \
+      "${PROJECT_DIR}/.claude-memory-session" 2>/dev/null || true
+
 # Output JSON with session summary
 cat <<EOF
 {
