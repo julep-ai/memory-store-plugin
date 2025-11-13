@@ -2,7 +2,41 @@
 
 > Give Claude persistent memory. Stop re-explaining your codebase every session. Claude remembers corrections, patterns, and decisions—learning from mistakes instead of repeating them.
 
-A comprehensive Claude Code plugin that automatically tracks your development flow, captures session context, analyzes git commits, syncs CLAUDE.md files, and maintains team knowledge across projects.
+A comprehensive Claude Code plugin that automatically tracks your development flow, captures session context, analyzes git commits, and maintains team knowledge across projects.
+
+## Quick Start (5 Minutes)
+
+### 1. Install the Plugin
+
+```bash
+# Add the marketplace
+/plugin marketplace add julep-ai/memory-store-plugin
+
+# Install the plugin
+/plugin install memory-store@claude-plugin
+```
+
+### 2. Connect to Memory Store
+
+```bash
+claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
+```
+
+This will open your browser for OAuth authentication. No manual token management needed!
+
+### 3. Start Using It
+
+```bash
+cd your-project
+claude
+```
+
+Check status:
+```
+/memory-status
+```
+
+That's it! The plugin is now automatically tracking your development session.
 
 ## Features
 
@@ -31,26 +65,14 @@ A comprehensive Claude Code plugin that automatically tracks your development fl
 - **Team knowledge**: Surfaces insights from other team members
 
 ### 🔧 Custom Slash Commands
-- `/memory-sync` - Manually synchronize project state to memory
 - `/memory-status` - View current tracking status and statistics
-- `/memory-context` - Retrieve relevant context for current work
+- `/memory-sync` - Manually synchronize project state to memory
+- `/memory-context [query]` - Retrieve relevant context for current work
 - `/memory-overview` - Generate comprehensive project overview
 - `/checkpoint` - Trigger progress validation checkpoint
 - `/correct "explanation"` - Correct Claude's mistakes with high-priority learning
 - `/session-feedback` - View current session quality rating
 - `/validate-changes` - Pre-commit validation with security checks
-
-### 🎓 Specialized Agent
-- **Memory Tracker Agent**: Deep project analysis and pattern documentation
-- **Cross-repo context**: Analyzes relationships between multiple repositories
-- **Workflow documentation**: Captures team development processes
-- **Business logic mapping**: Documents core workflows and rules
-
-### ⚡ Agent Skill
-- **Memory Context Retrieval Skill**: Auto-invoked for contextual awareness
-- **Pattern matching**: Detects when similar work has been done before
-- **Deviation warnings**: Alerts when current approach differs from patterns
-- **Proactive suggestions**: Recommends best practices automatically
 
 ### 🎯 Interactive Validation & Feedback
 - **Progress Checkpoints**: Auto-validates after every 10 file changes
@@ -62,9 +84,7 @@ A comprehensive Claude Code plugin that automatically tracks your development fl
 
 ## Installation
 
-### Quick Install (Recommended)
-
-The easiest way to install is via the Claude Code plugin marketplace:
+### Quick Install via Marketplace (Recommended)
 
 ```bash
 # Add the marketplace
@@ -72,29 +92,14 @@ The easiest way to install is via the Claude Code plugin marketplace:
 
 # Install the plugin
 /plugin install memory-store@claude-plugin
-```
 
-That's it! See [MARKETPLACE.md](MARKETPLACE.md) for detailed marketplace installation guide.
-
-### Configure Memory Store Connection
-
-After installation, connect to the memory store server:
-
-```bash
-# Add the memory store MCP server (one command!)
+# Connect to Memory Store
 claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
 ```
 
-This will:
-1. Open your browser for authentication
-2. Securely store your credentials
-3. Enable automatic memory tracking
+### Alternative Installation Methods
 
-**Note**: Authentication uses OAuth 2.0 - no manual token management needed! Your credentials are stored securely by Claude Code and automatically refreshed.
-
-### Alternative: Manual Installation
-
-For development or custom setups:
+#### From Local Repository
 
 ```bash
 git clone https://github.com/julep-ai/memory-store-plugin.git
@@ -102,9 +107,36 @@ git clone https://github.com/julep-ai/memory-store-plugin.git
 /plugin install memory-store@claude-plugin
 ```
 
-### Verify Installation
+#### From Git URL
 
-Test the plugin:
+```bash
+/plugin marketplace add https://github.com/julep-ai/memory-store-plugin.git
+/plugin install memory-store@claude-plugin
+```
+
+### Team Installation
+
+For team-wide deployment, add to your project's `.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "julep-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "julep-ai/memory-store-plugin"
+      }
+    }
+  },
+  "enabledPlugins": [
+    "memory-store"
+  ]
+}
+```
+
+When team members trust the repository, the plugin is automatically installed!
+
+### Verify Installation
 
 ```bash
 /memory-status
@@ -125,56 +157,78 @@ The plugin works automatically in the background:
 
 You don't need to do anything - it just works!
 
-### Manual Commands
+### Essential Commands
 
-#### View Tracking Status
+| Command | What It Does |
+|---------|--------------|
+| `/memory-status` | Show tracking status |
+| `/memory-sync` | Manually sync to memory |
+| `/memory-context [query]` | Get relevant context |
+| `/memory-overview` | Generate project overview |
+| `/checkpoint` | Trigger validation checkpoint |
+| `/correct "msg"` | Record correction (high priority) |
+| `/session-feedback` | View session quality |
+
+### Example Workflow
+
+**Morning - Start Work**
+```bash
+cd your-project
+claude
+```
+Plugin initializes and loads yesterday's context
+
+**During Development**
+```
+Add authentication to the API
+```
+Plugin tracks all your changes automatically
+
+**Making Commits**
+```bash
+git commit -m "feat: add OAuth2 authentication"
+```
+Plugin analyzes and stores commit context
+
+**Correct Mistakes**
+```
+/correct "We use OAuth2, not JWT. Decided Nov 6 for better token security."
+```
+Claude will remember this correction forever
+
+**End Session**
+```
+<Ctrl+D to exit>
+```
+Plugin summarizes and stores session learnings
+
+**Next Day**
+
+When you or a teammate starts Claude Code, all that context is available!
+
+### Intelligent Context Retrieval
+
+Claude automatically uses stored context:
+
+**Example 1: Following Patterns**
 
 ```
-/memory-status
+You: "I need to add a new API endpoint"
+
+Claude: "I'll help you create that endpoint. Based on our established
+patterns (see src/api/auth.ts:45), I'll follow the same authentication
+and error handling conventions..."
 ```
 
-Shows what's being tracked in your current session:
-- Files modified
-- Commits analyzed
-- Context stored
-- Memory store statistics
-
-#### Retrieve Context
+**Example 2: Decision History**
 
 ```
-/memory-context authentication flow
+You: "Should we use MongoDB or PostgreSQL?"
+
+Claude: "Looking at our memory store, the team decided to use PostgreSQL
+3 months ago for ACID compliance and complex relationships. Unless this
+feature has different requirements, I'd recommend staying consistent..."
 ```
-
-Retrieves relevant context about authentication from past work:
-- Similar implementations
-- Team decisions
-- Established patterns
-- Related documentation
-
-#### Sync to Memory
-
-```
-/memory-sync
-```
-
-Manually synchronizes current project state:
-- Captures file structure
-- Analyzes git history
-- Syncs CLAUDE.md files
-- Updates project overview
-
-#### Generate Overview
-
-```
-/memory-overview
-```
-
-Generates comprehensive project overview:
-- Architecture documentation
-- Business logic workflows
-- Team conventions
-- Development patterns
-- Knowledge gaps
 
 ### Working with CLAUDE.md Files
 
@@ -187,82 +241,7 @@ The plugin automatically syncs your CLAUDE.md files and anchor comments:
 Our authentication uses OAuth2 with JWT tokens...
 ```
 
-When you reference anchor comments in code or documentation, the plugin maintains these relationships in memory, making it easy for team members to find relevant context.
-
-### Intelligent Context Retrieval
-
-Claude will automatically use stored context to provide better responses:
-
-**Example 1: Following Patterns**
-
-```
-You: "I need to add a new API endpoint"
-
-Claude: "I'll help you create that endpoint. Based on our established 
-patterns (see src/api/auth.ts:45), I'll follow the same authentication 
-and error handling conventions..."
-```
-
-**Example 2: Decision History**
-
-```
-You: "Should we use MongoDB or PostgreSQL?"
-
-Claude: "Looking at our memory store, the team decided to use PostgreSQL 
-3 months ago for ACID compliance and complex relationships. Unless this 
-feature has different requirements, I'd recommend staying consistent..."
-```
-
-## Configuration
-
-### Extending with Additional MCP Servers
-
-You can add support for Linear, Jam.dev, or other MCP servers:
-
-1. Copy `.mcp-extensions.json.example` to `.mcp-extensions.json`
-2. Add your API keys
-3. Restart Claude Code
-
-Example with Linear integration:
-
-```json
-{
-  "mcpServers": {
-    "memory": { ... },
-    "linear": {
-      "command": "npx",
-      "args": ["@linear/mcp-server"],
-      "env": {
-        "LINEAR_API_KEY": "your-key-here"
-      }
-    }
-  }
-}
-```
-
-The plugin will automatically integrate Linear issues into memory context!
-
-### Customizing Hooks
-
-Edit `hooks/hooks.json` to customize when hooks fire:
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/track-changes.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+When you reference anchor comments in code or documentation, the plugin maintains these relationships in memory.
 
 ## How It Works
 
@@ -345,50 +324,74 @@ If your team works on multiple related projects:
 
 1. Install the plugin in each project
 2. Authenticate once with the same memory store account
-3. The Memory Tracker Agent can analyze cross-repo relationships
-4. All projects share the same memory context automatically
+3. All projects share the same memory context automatically
 
 ## Best Practices
 
-### 1. Use Descriptive Commit Messages
+### ✅ Do This
 
-The plugin analyzes commit messages - use conventional commits:
+- **Use conventional commit messages**: `feat:`, `fix:`, `docs:`, etc.
+- **Keep CLAUDE.md files updated**: Document patterns as you establish them
+- **Run `/memory-sync` after major features**: Capture important milestones
+- **Use `/memory-context` when starting new work**: Check for similar implementations
+- **Correct Claude with `/correct`**: High-priority learning that persists forever
 
-```bash
-feat: add OAuth2 authentication flow
-fix: resolve token refresh race condition
-docs: update CLAUDE.md with auth patterns
+### ❌ Avoid This
+
+- Don't disable the hooks - they provide automatic tracking
+- Don't skip commit messages - they're analyzed for patterns
+- Don't ignore pattern suggestions - they represent team knowledge
+
+## Configuration
+
+### Extending with Additional MCP Servers
+
+You can add support for Linear, Jam.dev, or other MCP servers:
+
+1. Copy `.mcp-extensions.json.example` to `.mcp-extensions.json`
+2. Add your API keys
+3. Restart Claude Code
+
+Example with Linear integration:
+
+```json
+{
+  "mcpServers": {
+    "memory": { ... },
+    "linear": {
+      "command": "npx",
+      "args": ["@linear/mcp-server"],
+      "env": {
+        "LINEAR_API_KEY": "your-key-here"
+      }
+    }
+  }
+}
 ```
 
-### 2. Maintain CLAUDE.md Files
+The plugin will automatically integrate Linear issues into memory context!
 
-Keep your CLAUDE.md files up to date:
-- Document patterns as you establish them
-- Use anchor comments for important sections
-- Reference anchors in code and discussions
+### Customizing Hooks
 
-### 3. Regular Syncs
+Edit `hooks/hooks.json` to customize when hooks fire:
 
-Run `/memory-sync` after:
-- Major feature completions
-- Architectural decisions
-- Before team meetings
-- When onboarding new members
-
-### 4. Query Context Early
-
-Use `/memory-context` when starting new work:
-- Check for similar implementations
-- Review past decisions
-- Understand team conventions
-
-### 5. Generate Overviews Periodically
-
-Run `/memory-overview` to:
-- Create onboarding documentation
-- Prepare for stakeholder updates
-- Audit knowledge gaps
-- Plan technical debt work
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/track-changes.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
 ## Troubleshooting
 
@@ -408,53 +411,95 @@ If you see `"hooks": "./hooks/hooks.json"`, **remove that line**. Claude Code au
 
 **Other checks:**
 
-1. Check plugin structure:
 ```bash
+# 1. Check plugin structure
 ls -la .claude-plugin/
-```
 
-2. Verify plugin.json is valid:
-```bash
+# 2. Verify plugin.json is valid
 cat .claude-plugin/plugin.json | jq .
-```
 
-3. Check Claude Code debug output:
-```bash
+# 3. Check Claude Code debug output
 claude --debug
 ```
 
 ### Hooks Not Firing
 
-1. Ensure scripts are executable:
 ```bash
+# 1. Ensure scripts are executable
 chmod +x scripts/*.sh
-```
 
-2. Check hook configuration:
-```bash
+# 2. Check hook configuration
 cat hooks/hooks.json | jq .
-```
 
-3. Test scripts manually:
-```bash
+# 3. Test scripts manually
 bash scripts/session-start.sh
 ```
 
 ### Memory Store Connection Issues
 
-1. Check MCP server status:
 ```bash
+# 1. Check MCP server status
 claude mcp list
-```
 
-2. Re-authenticate if needed:
-```bash
+# 2. Re-authenticate if needed
 claude mcp remove memory-store
 claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
+
+# 3. Check network connectivity
+# 4. Verify OAuth authentication completed in browser
 ```
 
-3. Check network connectivity
-4. Verify OAuth authentication completed successfully (check browser)
+### Plugin Not Found
+
+```bash
+# 1. Verify marketplace is added
+/plugin marketplace list
+
+# 2. Refresh marketplace
+/plugin marketplace update claude-plugin
+
+# 3. Try reinstalling
+/plugin uninstall memory-store
+/plugin install memory-store@claude-plugin
+```
+
+## Common Use Cases
+
+### New Feature Development
+
+```
+/memory-context authentication patterns
+```
+→ Check existing patterns
+```
+Implement OAuth2 following established patterns
+```
+→ Build with consistency
+```
+git commit -m "feat: add OAuth2 support"
+```
+→ Pattern stored for team
+
+### Onboarding New Developer
+
+```
+/memory-overview
+```
+→ Generate comprehensive project overview with architecture, patterns, and decisions
+
+### Code Review
+
+```
+/memory-context why did we choose PostgreSQL
+```
+→ Get historical decision context
+
+### Bug Investigation
+
+```
+/memory-context error handling in API layer
+```
+→ See how errors are handled elsewhere
 
 ## Development
 
@@ -478,27 +523,6 @@ claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
 3. Document usage and examples
 4. Restart Claude Code
 
-## Examples
-
-See the [examples/](examples/) directory for:
-- Sample CLAUDE.md files
-- Example memory queries
-- Hook customization examples
-- Team workflow templates
-
-## Contributing
-
-Contributions welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests if applicable
-4. Submit a pull request
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details
-
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/julep-ai/memory-store-plugin/issues)
@@ -508,6 +532,10 @@ MIT License - see [LICENSE](LICENSE) file for details
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for version history.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Credits
 
