@@ -1,18 +1,38 @@
 #!/bin/bash
 # Track Changes Hook - Monitor file modifications in real-time
-# This script runs after Write or Edit tool usage
+# This script runs before Write or Edit tool usage (PreToolUse)
 
 set -euo pipefail
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
+
+# Load session state from project-local file
+SESSION_FILE="${PROJECT_DIR}/.claude-session"
+if [[ -f "${SESSION_FILE}" ]]; then
+    source "${SESSION_FILE}"
+fi
+
 SESSION_ID="${MEMORY_SESSION_ID:-unknown}"
 
-# Get the file path from tool input (Claude Code provides this)
-FILE_PATH="${1:-}"
+# Read JSON input from stdin (Claude Code hook protocol)
+if [ -t 0 ]; then
+    # No stdin (terminal), exit silently
+    cat <<EOF
+{
+  "continue": true
+}
+EOF
+    exit 0
+fi
 
-if [[ -z "${FILE_PATH}" ]]; then
-    # Try to get from recent git changes
-    FILE_PATH=$(git diff --name-only HEAD 2>/dev/null | head -1 || echo "")
+INPUT_JSON=$(cat)
+
+# Extract file_path from tool_input using jq or bash fallback
+if command -v jq &> /dev/null; then
+    FILE_PATH=$(echo "$INPUT_JSON" | jq -r '.tool_input.file_path // empty' 2>/dev/null || echo "")
+else
+    # Fallback: simple grep for file_path
+    FILE_PATH=$(echo "$INPUT_JSON" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)".*/\1/' || echo "")
 fi
 
 if [[ -z "${FILE_PATH}" ]]; then
@@ -64,17 +84,17 @@ elif [[ "${FILE_PATH}" =~ CLAUDE\.md$ ]] || [[ "${FILE_PATH}" =~ claude\.md$ ]];
     PATTERNS_DETECTED="documentation (CLAUDE.md)"
 fi
 
-# Increment change counter (from environment)
+# Increment change counter (from session file)
 CHANGES_COUNT=$((${MEMORY_CHANGES_COUNT:-0} + 1))
 
-# Update environment file with new count
-if [[ -n "${CLAUDE_ENV_FILE:-}" ]]; then
-    # Use sed to update the counter or append if not exists
-    if grep -q "MEMORY_CHANGES_COUNT=" "${CLAUDE_ENV_FILE}" 2>/dev/null; then
-        sed -i.bak "s/MEMORY_CHANGES_COUNT=.*/MEMORY_CHANGES_COUNT=${CHANGES_COUNT}/" "${CLAUDE_ENV_FILE}"
-        rm -f "${CLAUDE_ENV_FILE}.bak"
+# Update session file with new count
+if [[ -f "${SESSION_FILE}" ]]; then
+    # Use sed to update the counter in the session file
+    if grep -q "MEMORY_CHANGES_COUNT=" "${SESSION_FILE}" 2>/dev/null; then
+        sed -i.bak "s/MEMORY_CHANGES_COUNT=.*/MEMORY_CHANGES_COUNT=${CHANGES_COUNT}/" "${SESSION_FILE}"
+        rm -f "${SESSION_FILE}.bak"
     else
-        echo "export MEMORY_CHANGES_COUNT=${CHANGES_COUNT}" >> "${CLAUDE_ENV_FILE}"
+        echo "MEMORY_CHANGES_COUNT=${CHANGES_COUNT}" >> "${SESSION_FILE}"
     fi
 fi
 

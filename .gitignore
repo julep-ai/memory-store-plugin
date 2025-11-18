@@ -1,4 +1,5 @@
 # Session files
+.claude-session
 .claude-memory-session
 .claude-session-*
 .claude-memory-*.json

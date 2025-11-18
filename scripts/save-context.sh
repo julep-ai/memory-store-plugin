@@ -4,8 +4,15 @@
 
 set -euo pipefail
 
-PROJECT_DIR="${PWD}"
-SESSION_ID="${CLAUDE_MEMORY_SESSION_ID:-unknown}"
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
+
+# Load session state from project-local file
+SESSION_FILE="${PROJECT_DIR}/.claude-session"
+if [[ -f "${SESSION_FILE}" ]]; then
+    source "${SESSION_FILE}"
+fi
+
+SESSION_ID="${MEMORY_SESSION_ID:-unknown}"
 
 # Log function
 log() {

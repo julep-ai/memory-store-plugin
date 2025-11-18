@@ -12,15 +12,14 @@ START_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 # Get project name from directory
 PROJECT_NAME=$(basename "${PROJECT_DIR}")
 
-# Persist session state in environment file for other hooks
-if [[ -n "${CLAUDE_ENV_FILE:-}" ]]; then
-    cat >> "${CLAUDE_ENV_FILE}" <<EOF
-export MEMORY_SESSION_ID="${SESSION_ID}"
-export MEMORY_SESSION_START="${START_TIME}"
-export MEMORY_CHANGES_COUNT=0
-export MEMORY_COMMITS_COUNT=0
+# Persist session state in project-local file for other hooks
+SESSION_FILE="${PROJECT_DIR}/.claude-session"
+cat > "${SESSION_FILE}" <<EOF
+MEMORY_SESSION_ID="${SESSION_ID}"
+MEMORY_SESSION_START="${START_TIME}"
+MEMORY_CHANGES_COUNT=0
+MEMORY_COMMITS_COUNT=0
 EOF
-fi
 
 # Get git info if in a git repo
 if git rev-parse --git-dir > /dev/null 2>&1; then
@@ -39,11 +38,10 @@ CLAUDE_MD_COUNT=$(find "${PROJECT_DIR}" -name "CLAUDE.md" -o -name "claude.md" 2
 # Count files in project (limit search for performance)
 FILE_COUNT=$(find "${PROJECT_DIR}" -type f -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | wc -l | tr -d ' ')
 
-# Output JSON to trigger Claude to store this in memory
-# The additionalContext will be seen by the Memory Auto-Track Skill
+# Output JSON to trigger Claude to load context and record session start
 cat <<EOF
 {
-  "additionalContext": "🚀 Development session starting in project ${PROJECT_NAME} on branch ${GIT_BRANCH}. Session ID: ${SESSION_ID}. Current commit: ${GIT_COMMIT}. Project has ${FILE_COUNT} files and ${CLAUDE_MD_COUNT} CLAUDE.md files. Recent commits: ${RECENT_COMMITS}. This session context should be stored in memory using memory__record tool with importance: normal. Background context: Session initialized at ${START_TIME} in ${PROJECT_DIR}.",
+  "additionalContext": "🚀 Session ${SESSION_ID} started in ${PROJECT_NAME}/${GIT_BRANCH} at ${START_TIME}. Project has ${FILE_COUNT} files, ${CLAUDE_MD_COUNT} CLAUDE.md files. Recent commits: ${RECENT_COMMITS}. Current commit: ${GIT_COMMIT}. Session state saved to .claude-session file. IMPORTANT: (1) Call mcp__memory-store__overview with mode='full' to load complete project context. (2) Call mcp__memory-store__record to save: memory='Session ${SESSION_ID} started in ${PROJECT_NAME} on branch ${GIT_BRANCH}', background='Project directory: ${PROJECT_DIR}. Start time: ${START_TIME}. Files tracked: ${FILE_COUNT}.', importance='normal'.",
   "continue": true
 }
 EOF

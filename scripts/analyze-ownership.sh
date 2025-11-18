@@ -4,6 +4,11 @@
 
 set -euo pipefail
 
+# Read and discard stdin (hook protocol requirement)
+if [ ! -t 0 ]; then
+    cat > /dev/null
+fi
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 
 # Only run if in git repo

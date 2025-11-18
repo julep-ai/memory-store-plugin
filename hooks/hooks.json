@@ -20,9 +20,8 @@
         ]
       }
     ],
-    "PostToolUse": [
+    "PreToolUse": [
       {
-        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
@@ -32,29 +31,17 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/analyze-anchors.sh"
           }
-        ]
+        ],
+        "matcher": "Write|Edit"
       },
       {
-        "matcher": "bash.*git add",
         "hooks": [
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-commit.sh"
           }
-        ]
-      },
-      {
-        "matcher": "bash.*git commit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/analyze-commits.sh"
-          },
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/analyze-ownership.sh"
-          }
-        ]
+        ],
+        "matcher": "Bash"
       }
     ],
     "PreCompact": [
@@ -69,7 +56,6 @@
     ],
     "Notification": [
       {
-        "matcher": "error|failed|incorrect|wrong|mistake|deprecated|warning",
         "hooks": [
           {
             "type": "command",
@@ -79,7 +65,8 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/auto-feedback.sh"
           }
-        ]
+        ],
+        "matcher": "error|failed|incorrect|wrong|mistake|deprecated|warning"
       }
     ]
   }

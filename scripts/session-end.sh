@@ -5,6 +5,13 @@
 set -euo pipefail
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
+
+# Load session state from project-local file
+SESSION_FILE="${PROJECT_DIR}/.claude-session"
+if [[ -f "${SESSION_FILE}" ]]; then
+    source "${SESSION_FILE}"
+fi
+
 SESSION_ID="${MEMORY_SESSION_ID:-unknown}"
 START_TIME="${MEMORY_SESSION_START:-unknown}"
 FILES_TRACKED="${MEMORY_CHANGES_COUNT:-0}"
@@ -37,24 +44,25 @@ else
 fi
 
 # Build session summary
-SESSION_SUMMARY="Session completed: ${DURATION_HUMAN} duration, ${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits analyzed"
+SESSION_SUMMARY="Session ${SESSION_ID} completed in ${PROJECT_NAME} after ${DURATION_HUMAN}"
+SESSION_DETAILS="${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits analyzed, ${MODIFIED_FILES} files still modified"
 
 # Build comprehensive background context
 END_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-BACKGROUND_CONTEXT="Session ${SESSION_ID} ended at ${END_TIME} in project ${PROJECT_NAME} on branch ${GIT_BRANCH}. Duration: ${DURATION_HUMAN}. Files tracked: ${FILES_TRACKED}. Commits analyzed: ${COMMITS_ANALYZED}. Modified files still pending: ${MODIFIED_FILES}. This session's learnings should inform future work on similar features."
+BACKGROUND_CONTEXT="Session ${SESSION_ID} ended at ${END_TIME} in project ${PROJECT_NAME} (${PROJECT_DIR}) on branch ${GIT_BRANCH}. Started: ${START_TIME}. Duration: ${DURATION_HUMAN}. Files tracked: ${FILES_TRACKED}. Commits analyzed: ${COMMITS_ANALYZED}. Modified files still pending: ${MODIFIED_FILES}. This session's learnings should inform future work on similar features."
 
-# Clean up temporary tracking files (they've already been synced to cloud)
+# Clean up temporary tracking files
 rm -f "${PROJECT_DIR}/.claude-memory-changes.jsonl" \
       "${PROJECT_DIR}/.claude-session-changes-count" \
       "${PROJECT_DIR}/.claude-memory-record-request.json" \
       "${PROJECT_DIR}/.claude-memory-session-end.json" \
-      "${PROJECT_DIR}/.claude-memory-session" 2>/dev/null || true
+      "${SESSION_FILE}" 2>/dev/null || true
 
-# Output JSON with session summary
+# Output JSON to trigger memory save
 cat <<EOF
 {
-  "additionalContext": "👋 ${SESSION_SUMMARY}. Store this session summary in memory using memory__record with importance: normal, background: '${BACKGROUND_CONTEXT}'",
-  "userMessage": "✓ Session complete! Tracked ${FILES_TRACKED} files and ${COMMITS_ANALYZED} commits in ${DURATION_HUMAN}",
+  "additionalContext": "👋 Session ${SESSION_ID} ending. ${SESSION_SUMMARY}. Details: ${SESSION_DETAILS}. IMPORTANT: Call mcp__memory-store__record NOW to save: memory='${SESSION_SUMMARY}. ${SESSION_DETAILS}.', background='${BACKGROUND_CONTEXT}', importance='normal'.",
+  "userMessage": "✓ Session ending! ${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits analyzed over ${DURATION_HUMAN}",
   "continue": true
 }
 EOF

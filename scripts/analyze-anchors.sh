@@ -5,10 +5,25 @@
 set -euo pipefail
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
-FILE_PATH="${CLAUDE_TOOL_RESULT_PATH:-unknown}"
+
+# Read JSON input from stdin (Claude Code hook protocol)
+if [ -t 0 ]; then
+    # No stdin, exit silently
+    echo '{"continue": true}'
+    exit 0
+fi
+
+INPUT_JSON=$(cat)
+
+# Extract file_path from tool_input
+if command -v jq &> /dev/null; then
+    FILE_PATH=$(echo "$INPUT_JSON" | jq -r '.tool_input.file_path // empty' 2>/dev/null || echo "")
+else
+    FILE_PATH=$(echo "$INPUT_JSON" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)".*/\1/' || echo "")
+fi
 
 # Only process if file was actually written/edited
-if [[ "${FILE_PATH}" == "unknown" ]] || [[ ! -f "${FILE_PATH}" ]]; then
+if [[ -z "${FILE_PATH}" ]] || [[ ! -f "${FILE_PATH}" ]]; then
   echo '{"continue": true}'
   exit 0
 fi
