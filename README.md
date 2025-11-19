@@ -26,7 +26,7 @@ claude plugin install memory-store@claude-plugin
 
 ```bash
 # Add the Memory Store MCP server
-claude mcp add memory-store https://beta.memory.store/mcp
+claude mcp add memory-store -t http https://beta.memory.store/mcp
 ```
 
 ✅ This enables persistent memory storage
