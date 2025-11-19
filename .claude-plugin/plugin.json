@@ -21,12 +21,8 @@
   ],
   "mcpServers": {
     "memory": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://beta.memory.store/mcp"
-      ],
+      "url": "https://beta.memory.store/mcp",
+      "transport": "http",
       "oauth": {
         "enabled": true,
         "discovery_url": "https://beta.memory.store/.well-known/oauth-protected-resource"
