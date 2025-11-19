@@ -6,6 +6,10 @@ A comprehensive Claude Code plugin that automatically tracks your development fl
 
 ## Quick Start (3 Minutes)
 
+**IMPORTANT**: Both the plugin AND the MCP server are required for automatic tracking to work:
+- **Plugin**: Provides automatic hooks that track your development activity
+- **MCP Server**: Stores the tracked data persistently
+
 ### 1. Install the Plugin
 
 ```bash
@@ -16,6 +20,8 @@ claude plugin marketplace add julep-ai/memory-store-plugin
 claude plugin install memory-store@claude-plugin
 ```
 
+✅ This enables automatic tracking hooks
+
 ### 2. Configure Memory Store MCP Server
 
 ```bash
@@ -23,21 +29,69 @@ claude plugin install memory-store@claude-plugin
 claude mcp add memory-store https://beta.memory.store/mcp
 ```
 
+✅ This enables persistent memory storage
+
 The OAuth authentication flow will open in your browser. Authenticate once and you're all set!
 
-### 3. Start Using It
+### 3. Verify Automatic Tracking
 
 ```bash
 cd your-project
 claude
 ```
 
-Check status:
+Check that everything is working:
 ```
 /memory-store:memory-status
 ```
 
-The plugin is now automatically tracking your development session!
+You should see session tracking active!
+
+## What Gets Tracked Automatically
+
+Once installed, the plugin **automatically tracks** (no manual commands needed):
+
+### 📊 Every Session
+- ✅ **Session start**: Project state, git branch, file count
+- ✅ **Session end**: Duration, files changed, commits made, quality score
+- ✅ **Context loading**: Previous session learnings loaded automatically
+
+### 📝 Every File Change
+- ✅ **Write/Edit operations**: File path, language, patterns detected (API, UI, Service, etc.)
+- ✅ **Change count**: Tracked per session
+- ✅ **Automatic checkpoints**: Every 10 file changes
+
+### 🔄 Every Git Commit
+- ✅ **Commit analysis**: Message, files changed, patterns
+- ✅ **Ownership tracking**: Who commits where
+- ✅ **Pre-commit validation**: Security checks, secret detection
+
+### 🎯 Every Error/Correction
+- ✅ **Error detection**: Automatic capture when you say "wrong", "error", "failed"
+- ✅ **High-priority learning**: Stored as corrections with `is_resolution: true`
+- ✅ **Session quality tracking**: Reduces quality score for feedback
+
+### 📋 Context Compaction
+- ✅ **Before compression**: Saves important context automatically
+- ✅ **Preserves decisions**: Key reasoning and patterns retained
+
+## No Manual Work Required!
+
+Just use Claude Code normally:
+```bash
+You: "Add authentication to the API"
+Claude: [Creates auth.ts]
+```
+
+**Behind the scenes:**
+1. ✅ Hook fires (PreToolUse on Write)
+2. ✅ track-changes.sh extracts file info
+3. ✅ Claude calls mcp__memory-store__record
+4. ✅ Data stored: "Created src/api/auth.ts - API authentication pattern"
+5. ✅ Session counter incremented
+
+**You see:** Normal Claude Code workflow
+**Plugin does:** All tracking automatically!
 
 ## Features
 
@@ -87,31 +141,42 @@ The plugin is now automatically tracking your development session!
 
 ### Quick Install via Marketplace (Recommended)
 
+**Step 1: Install Plugin**
 ```bash
-# Add the marketplace
-/plugin marketplace add julep-ai/memory-store-plugin
-
-# Install the plugin (auto-configures MCP connection)
-/plugin install memory-store@claude-plugin
+claude plugin marketplace add julep-ai/memory-store-plugin
+claude plugin install memory-store@claude-plugin
 ```
 
-The plugin automatically configures the Memory Store MCP server connection and OAuth authentication. No manual setup needed!
+**Step 2: Configure MCP Server**
+```bash
+claude mcp add memory-store https://beta.memory.store/mcp
+```
+
+OAuth will open in your browser. Authenticate once and it works everywhere!
 
 ### Alternative Installation Methods
 
 #### From Local Repository
 
 ```bash
+# Clone and install plugin
 git clone https://github.com/julep-ai/memory-store-plugin.git
-/plugin marketplace add ./memory-store-plugin
-/plugin install memory-store@claude-plugin
+claude plugin marketplace add ./memory-store-plugin
+claude plugin install memory-store@claude-plugin
+
+# Configure MCP server (required!)
+claude mcp add memory-store https://beta.memory.store/mcp
 ```
 
 #### From Git URL
 
 ```bash
-/plugin marketplace add https://github.com/julep-ai/memory-store-plugin.git
-/plugin install memory-store@claude-plugin
+# Install plugin from Git
+claude plugin marketplace add https://github.com/julep-ai/memory-store-plugin.git
+claude plugin install memory-store@claude-plugin
+
+# Configure MCP server (required!)
+claude mcp add memory-store https://beta.memory.store/mcp
 ```
 
 ### Team Installation
@@ -139,10 +204,24 @@ When team members trust the repository, the plugin is automatically installed!
 ### Verify Installation
 
 ```bash
-/memory-status
+# Start Claude Code
+cd your-project
+claude
+
+# Check plugin loaded
+/plugin
+# Should show: ✔ memory-store · Installed
+
+# Check MCP connected
+/mcp
+# Should show: ✓ memory-store - Connected
+
+# Check tracking active
+/memory-store:memory-status
+# Should show: Session tracking information
 ```
 
-You should see session tracking information!
+✅ If all three checks pass, automatic tracking is working!
 
 ## Usage
 
