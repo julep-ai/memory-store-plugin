@@ -4,21 +4,28 @@
 
 A comprehensive Claude Code plugin that automatically tracks your development flow, captures session context, analyzes git commits, and maintains team knowledge across projects.
 
-## Quick Start (2 Minutes)
+## Quick Start (3 Minutes)
 
 ### 1. Install the Plugin
 
 ```bash
 # Add the marketplace
-/plugin marketplace add julep-ai/memory-store-plugin
+claude plugin marketplace add julep-ai/memory-store-plugin
 
-# Install the plugin (this auto-configures the MCP server!)
-/plugin install memory-store@claude-plugin
+# Install the plugin
+claude plugin install memory-store@claude-plugin
 ```
 
-That's it! The plugin automatically connects to Memory Store and will prompt for OAuth authentication on first use.
+### 2. Configure Memory Store MCP Server
 
-### 2. Start Using It
+```bash
+# Add the Memory Store MCP server
+claude mcp add memory-store https://beta.memory.store/mcp
+```
+
+The OAuth authentication flow will open in your browser. Authenticate once and you're all set!
+
+### 3. Start Using It
 
 ```bash
 cd your-project
@@ -27,10 +34,10 @@ claude
 
 Check status:
 ```
-/memory-status
+/memory-store:memory-status
 ```
 
-The plugin is now automatically tracking your development session. No additional configuration needed!
+The plugin is now automatically tracking your development session!
 
 ## Features
 

@@ -18,15 +18,5 @@
     "git-analysis",
     "session-tracking",
     "knowledge-sharing"
-  ],
-  "mcpServers": {
-    "memory": {
-      "url": "https://beta.memory.store/mcp",
-      "transport": "http",
-      "oauth": {
-        "enabled": true,
-        "discovery_url": "https://beta.memory.store/.well-known/oauth-protected-resource"
-      }
-    }
-  }
+  ]
 }
