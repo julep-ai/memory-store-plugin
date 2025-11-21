@@ -28,12 +28,15 @@ cd your-project
 claude
 ```
 
-Memory tracking works automatically. Check it's running:
-```
-/memory-status
+Memory tracking works automatically!
+
+**Check your session:**
+```bash
+cat .claude-session
+# Shows: Session ID, start time, files tracked, commits tracked
 ```
 
-You should see active session tracking!
+**Note**: Memory Store *retrieval* requires OAuth 2.1 authentication. See [Authentication Setup](#authentication-setup) below.
 
 ## What Gets Tracked Automatically
 
@@ -484,6 +487,42 @@ cat hooks/hooks.json | jq .
 
 # 3. Test scripts manually
 bash scripts/session-start.sh
+```
+
+### Authentication Setup
+
+**⚠️ Memory Store retrieval requires OAuth 2.1 authentication**
+
+If you get this error:
+```
+Error: "No valid session ID provided" (HTTP 400)
+```
+
+**What works without auth:**
+- ✅ Local session tracking (`.claude-session` file)
+- ✅ File change tracking (automatic)
+- ✅ Commit tracking (manual via skill)
+
+**What requires auth:**
+- ❌ Memory retrieval (`mcp__memory-store__recall`)
+- ❌ `/memory-recall` command
+- ❌ Automatic context retrieval in responses
+
+**To set up authentication:**
+1. Visit https://beta.memory.store
+2. Sign in with GitHub/Google
+3. Follow OAuth setup instructions
+4. Restart Claude Code
+
+**Check connection after auth:**
+```bash
+# Verify MCP server
+claude mcp list
+# Should show: ✓ memory-store - Connected
+
+# Test recall (requires auth)
+claude mcp call memory-store overview --mode basic
+# Should return overview, not auth error
 ```
 
 ### Memory Store Connection Issues
