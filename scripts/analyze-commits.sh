@@ -6,12 +6,18 @@ set -euo pipefail
 
 # JSON escape function to prevent command injection
 json_escape() {
-    printf '%s' "$1" | \
-        sed 's/\\/\\\\/g' | \
-        sed 's/"/\\"/g' | \
-        sed ':a;N;$!ba;s/\n/\\n/g' | \
-        sed 's/\t/\\t/g' | \
-        sed 's/\r/\\r/g'
+    # Use awk for better cross-platform compatibility
+    printf '%s' "$1" | awk '
+    {
+        gsub(/\\/, "\\\\")
+        gsub(/"/, "\\\"")
+        gsub(/\n/, "\\n")
+        gsub(/\t/, "\\t")
+        gsub(/\r/, "\\r")
+        printf "%s", $0
+    }
+    END { if (NR > 0) printf "" }
+    '
 }
 
 # This script can be called in two ways:
