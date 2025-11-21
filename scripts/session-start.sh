@@ -19,6 +19,12 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 SESSION_ID="mem-$(date +%Y%m%d)-$(uuidgen | cut -d'-' -f1)"
 START_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+# Load project context metadata for rich background
+PROJECT_CONTEXT_FILE="${PROJECT_DIR}/.claude-project-context"
+if [[ -f "${PROJECT_CONTEXT_FILE}" ]]; then
+    source "${PROJECT_CONTEXT_FILE}"
+fi
+
 # Get project name from directory
 PROJECT_NAME=$(basename "${PROJECT_DIR}")
 
@@ -71,8 +77,38 @@ RECENT_COMMITS_ESCAPED=$(json_escape "${RECENT_COMMITS}")
 GIT_COMMIT_ESCAPED=$(json_escape "${GIT_COMMIT}")
 MCP_STATUS_ESCAPED=$(json_escape "${MCP_STATUS}")
 
-# Build background context
-BACKGROUND_CONTEXT="Project directory: ${PROJECT_DIR_ESCAPED}. Start time: ${START_TIME_ESCAPED}. Files: ${FILE_COUNT}. CLAUDE.md files: ${CLAUDE_MD_COUNT}. Recent commits: ${RECENT_COMMITS_ESCAPED}. Current commit: ${GIT_COMMIT_ESCAPED}."
+# Build enriched background context with project metadata
+BACKGROUND_CONTEXT="Session ${SESSION_ID} started at ${START_TIME_ESCAPED} in ${PROJECT_DIR_ESCAPED}."
+
+# Add project identity and purpose
+if [[ -n "${PROJECT_FULL_NAME:-}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Project: ${PROJECT_FULL_NAME} (${PROJECT_NAME}) - ${PROJECT_PURPOSE:-A development project}."
+else
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Project: ${PROJECT_NAME}."
+fi
+
+# Add architecture context
+if [[ -n "${ARCHITECTURE:-}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Architecture: ${ARCHITECTURE}. ${ARCHITECTURE_DETAILS:-}"
+fi
+
+# Add git context
+BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Git: Branch ${GIT_BRANCH}, commit ${GIT_COMMIT_ESCAPED}. Recent commits: ${RECENT_COMMITS_ESCAPED}."
+
+# Add project metrics
+BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Project size: ${FILE_COUNT} files, ${CLAUDE_MD_COUNT} CLAUDE.md documentation files."
+
+# Add version and tech stack
+if [[ -n "${VERSION:-}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Version: ${VERSION}. ${VERSION_FOCUS:-}"
+fi
+
+if [[ -n "${TECH_STACK:-}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Tech stack: ${TECH_STACK}."
+fi
+
+# Add MCP status
+BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Memory Store MCP: ${MCP_STATUS}."
 
 # Build recall cues for context retrieval
 RECALL_CUES_ESCAPED=$(json_escape "${PROJECT_NAME}, ${GIT_BRANCH}, recent work, session, commit")

@@ -16,6 +16,12 @@ json_escape() {
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 
+# Load project context metadata for rich background
+PROJECT_CONTEXT_FILE="${PROJECT_DIR}/.claude-project-context"
+if [[ -f "${PROJECT_CONTEXT_FILE}" ]]; then
+    source "${PROJECT_CONTEXT_FILE}"
+fi
+
 # Load session state from project-local file
 SESSION_FILE="${PROJECT_DIR}/.claude-session"
 if [[ -f "${SESSION_FILE}" ]]; then
@@ -57,9 +63,32 @@ fi
 SESSION_SUMMARY="Session ${SESSION_ID} completed in ${PROJECT_NAME} after ${DURATION_HUMAN}"
 SESSION_DETAILS="${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits analyzed, ${MODIFIED_FILES} files still modified"
 
-# Build comprehensive background context
+# Build enriched comprehensive background context
 END_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-BACKGROUND_CONTEXT="Session ${SESSION_ID} ended at ${END_TIME} in project ${PROJECT_NAME} (${PROJECT_DIR}) on branch ${GIT_BRANCH}. Started: ${START_TIME}. Duration: ${DURATION_HUMAN}. Files tracked: ${FILES_TRACKED}. Commits analyzed: ${COMMITS_ANALYZED}. Modified files still pending: ${MODIFIED_FILES}. This session's learnings should inform future work on similar features."
+BACKGROUND_CONTEXT="Session ${SESSION_ID} ended at ${END_TIME}."
+
+# Add project identity
+if [[ -n "${PROJECT_FULL_NAME:-}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Project: ${PROJECT_FULL_NAME} (${PROJECT_NAME}) - ${PROJECT_PURPOSE:-Development project}."
+else
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Project: ${PROJECT_NAME}."
+fi
+
+# Add session metrics
+BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Location: ${PROJECT_DIR}, Branch: ${GIT_BRANCH}. Session duration: ${DURATION_HUMAN} (started ${START_TIME}). Activity: ${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits analyzed, ${MODIFIED_FILES} files still modified."
+
+# Add architecture context
+if [[ -n "${ARCHITECTURE:-}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Architecture: ${ARCHITECTURE}."
+fi
+
+# Add version info
+if [[ -n "${VERSION:-}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Version: ${VERSION}."
+fi
+
+# Add learning context
+BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} This session's learnings about ${PROJECT_FULL_NAME:-$PROJECT_NAME} should inform future work on similar features in this ${PROJECT_TYPE:-project}."
 
 # Queue session summary for processing
 bash "${PROJECT_DIR}/scripts/queue-memory.sh" \

@@ -17,6 +17,12 @@ json_escape() {
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 
+# Load project context metadata for rich background
+PROJECT_CONTEXT_FILE="${PROJECT_DIR}/.claude-project-context"
+if [[ -f "${PROJECT_CONTEXT_FILE}" ]]; then
+    source "${PROJECT_CONTEXT_FILE}"
+fi
+
 # Load session state from project-local file
 SESSION_FILE="${PROJECT_DIR}/.claude-session"
 if [[ -f "${SESSION_FILE}" ]]; then
@@ -183,8 +189,40 @@ PATTERNS_ESCAPED=$(json_escape "${PATTERNS_DETECTED}")
 PROJECT_NAME=$(basename "${PROJECT_DIR}")
 PROJECT_ESCAPED=$(json_escape "${PROJECT_NAME}")
 
-# Build background context
-BACKGROUND_CONTEXT="File ${REL_PATH} was ${CHANGE_TYPE} in session ${SESSION_ID}. Language: ${FILE_LANG}. Pattern: ${PATTERNS_DETECTED}. Change #${CHANGES_COUNT}. Project: ${PROJECT_NAME}."
+# Build enriched background context with project metadata
+# Basic file info
+BACKGROUND_CONTEXT="File ${REL_PATH} was ${CHANGE_TYPE} in session ${SESSION_ID}. Language: ${FILE_LANG}. Pattern: ${PATTERNS_DETECTED}. Change #${CHANGES_COUNT}."
+
+# Add project context if available
+if [[ -n "${PROJECT_FULL_NAME:-}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Project: ${PROJECT_FULL_NAME} (${PROJECT_NAME}) - ${PROJECT_PURPOSE:-A Claude Code plugin}."
+fi
+
+# Add architecture context
+if [[ -n "${ARCHITECTURE:-}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Architecture: ${ARCHITECTURE}. ${ARCHITECTURE_DETAILS:-}"
+fi
+
+# Add component role context based on file location
+COMPONENT_ROLE=""
+if [[ "${REL_PATH}" =~ ^scripts/ ]]; then
+    COMPONENT_ROLE="This script is part of the hooks system: ${COMPONENT_SCRIPTS:-}"
+elif [[ "${REL_PATH}" =~ ^skills/ ]]; then
+    COMPONENT_ROLE="This skill is part of the autonomous system: ${COMPONENT_SKILLS:-}"
+elif [[ "${REL_PATH}" =~ ^hooks/ ]]; then
+    COMPONENT_ROLE="This hook configuration defines: ${COMPONENT_HOOKS:-}"
+elif [[ "${REL_PATH}" =~ ^commands/ ]]; then
+    COMPONENT_ROLE="This command provides: ${COMPONENT_COMMANDS:-}"
+fi
+
+if [[ -n "${COMPONENT_ROLE}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} ${COMPONENT_ROLE}"
+fi
+
+# Add version context
+if [[ -n "${VERSION:-}" ]]; then
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Current version: ${VERSION}. ${VERSION_FOCUS:-}"
+fi
 
 # Queue memory for processing (bypasses additionalContext visibility issue)
 bash "${PROJECT_DIR}/scripts/queue-memory.sh" \
