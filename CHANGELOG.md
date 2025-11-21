@@ -5,9 +5,38 @@ All notable changes to the Memory Store Tracker Plugin will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2025-11-21
+
+### 🔧 Critical Fix: Queue-Based Architecture (Actually Works!)
+
+**Previous v1.2.2 signal-based approach failed** - hook additionalContext not visible to skills.
+
+**New queue-based system works** - file-based communication, fully automatic, truly autonomous.
+
+#### Fixed
+- Signal-based memory storage didn't work (hooks → signals → skills visibility issue)
+- Hooks' additionalContext consumed internally, never reached Claude/skills
+
+#### Added
+- `scripts/queue-memory.sh` - Write to `.memory-queue.jsonl` file
+- `skills/memory-queue-processor/` - Automatically processes queue every message
+- File-based communication bypasses visibility issue completely
+
+#### Changed
+- All hooks now call queue-memory.sh (session-start, session-end, track-changes)
+- Fully silent operation - user never knows processing happens
+
+#### Removed
+- `skills/memory-auto-store/` - Didn't work, replaced with queue processor
+- Manual `/memory-process-queue` command - Fully automatic now
+
+**Result**: Memory tracking ACTUALLY works autonomously now! ✅
+
+---
+
 ## [1.2.2] - 2025-11-21
 
-### 🔧 Critical Fix: Truly Autonomous Memory System
+### 🔧 Critical Fix: Attempted Signal-Based System (Didn't Work)
 
 #### Fixed
 

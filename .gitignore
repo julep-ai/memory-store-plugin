@@ -41,3 +41,4 @@ opencode.json
 test-hook-trigger.txt
 test-plugin-tracking.ts
 test-files/
+.memory-queue.jsonl

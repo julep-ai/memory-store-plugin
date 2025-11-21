@@ -64,8 +64,13 @@ BACKGROUND_CONTEXT="Project directory: ${PROJECT_DIR_ESCAPED}. Start time: ${STA
 RECALL_CUES_ESCAPED=$(json_escape "${PROJECT_NAME}, ${GIT_BRANCH}, recent work, session, commit")
 RECALL_BG_ESCAPED=$(json_escape "Session start in ${PROJECT_NAME} on ${GIT_BRANCH}. Loading recent context to understand current work.")
 
+# Queue memory for processing (bypasses additionalContext visibility issue)
+bash "${PROJECT_DIR}/scripts/queue-memory.sh" \
+  --memory "Session ${SESSION_ID} started in ${PROJECT_NAME} on branch ${GIT_BRANCH}" \
+  --background "${BACKGROUND_CONTEXT}" \
+  --importance "normal" 2>/dev/null || true
+
 # Output JSON to inform Claude about the session
-# Claude will automatically invoke MCP tools when it sees these instructions
 cat <<EOF
 {
   "additionalContext": "🚀 Session ${SESSION_ID} started in ${PROJECT_NAME}/${GIT_BRANCH} at ${START_TIME}.
@@ -73,20 +78,8 @@ cat <<EOF
 📊 Project snapshot: ${FILE_COUNT} files, ${CLAUDE_MD_COUNT} CLAUDE.md files.
 📝 Recent commits: ${RECENT_COMMITS}
 
-🤖 MEMORY_STORE_AUTO_RECORD:
-{
-  \"memory\": \"Session ${SESSION_ID_ESCAPED} started in ${PROJECT_NAME_ESCAPED} on branch ${GIT_BRANCH_ESCAPED}\",
-  \"background\": \"${BACKGROUND_CONTEXT}\",
-  \"importance\": \"normal\"
-}
-
-🤖 MEMORY_STORE_AUTO_RECALL:
-Please automatically invoke mcp__memory-store__recall with cues: [\"${PROJECT_NAME_ESCAPED}\", \"${GIT_BRANCH_ESCAPED}\", \"recent work\", \"session\", \"patterns\"] to load relevant context from previous sessions.
-
-🤖 MEMORY_STORE_AUTO_OVERVIEW:
-Please automatically invoke mcp__memory-store__overview with mode: \"basic\" to understand the current project state.
-
-This session initialization should be automatically processed using Memory Store MCP tools.",
+💾 Memory queued for automatic processing.
+🔍 Check for queued memories and recent context using memory-queue-processor skill.",
   "continue": true
 }
 EOF

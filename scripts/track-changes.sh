@@ -184,22 +184,18 @@ PROJECT_NAME=$(basename "${PROJECT_DIR}")
 PROJECT_ESCAPED=$(json_escape "${PROJECT_NAME}")
 
 # Build background context
-BACKGROUND_CONTEXT="File ${REL_PATH_ESCAPED} was ${CHANGE_TYPE_ESCAPED} in session ${SESSION_ID_ESCAPED}. Language: ${FILE_LANG_ESCAPED}. Pattern: ${PATTERNS_ESCAPED}. Change #${CHANGES_COUNT}. Project: ${PROJECT_ESCAPED}."
+BACKGROUND_CONTEXT="File ${REL_PATH} was ${CHANGE_TYPE} in session ${SESSION_ID}. Language: ${FILE_LANG}. Pattern: ${PATTERNS_DETECTED}. Change #${CHANGES_COUNT}. Project: ${PROJECT_NAME}."
 
-# Output JSON with structured memory tracking instruction for Claude
-# Claude will automatically invoke mcp__memory-store__record when it sees this
+# Queue memory for processing (bypasses additionalContext visibility issue)
+bash "${PROJECT_DIR}/scripts/queue-memory.sh" \
+  --memory "${MEMORY_TEXT}" \
+  --background "${BACKGROUND_CONTEXT}" \
+  --importance "${IMPORTANCE}" 2>/dev/null || true
+
+# Output JSON for Claude
 cat <<EOF
 {
-  "additionalContext": "📝 ${MEMORY_TEXT}. Session: ${SESSION_ID}, Change #${CHANGES_COUNT}.
-
-🤖 MEMORY_STORE_AUTO_RECORD:
-{
-  \"memory\": \"${MEMORY_ESCAPED}\",
-  \"background\": \"${BACKGROUND_CONTEXT}\",
-  \"importance\": \"${IMPORTANCE}\"
-}
-
-This file change should be automatically recorded in Memory Store using the mcp__memory-store__record tool.",
+  "additionalContext": "📝 ${MEMORY_TEXT}. Session: ${SESSION_ID}, Change #${CHANGES_COUNT}. Memory queued.",
   ${CHECKPOINT_MSG:+"userMessage": "$CHECKPOINT_MSG",}
   "continue": true
 }

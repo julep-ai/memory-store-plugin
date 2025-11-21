@@ -61,10 +61,11 @@ SESSION_DETAILS="${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits ana
 END_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 BACKGROUND_CONTEXT="Session ${SESSION_ID} ended at ${END_TIME} in project ${PROJECT_NAME} (${PROJECT_DIR}) on branch ${GIT_BRANCH}. Started: ${START_TIME}. Duration: ${DURATION_HUMAN}. Files tracked: ${FILES_TRACKED}. Commits analyzed: ${COMMITS_ANALYZED}. Modified files still pending: ${MODIFIED_FILES}. This session's learnings should inform future work on similar features."
 
-# Escape all variables for safe JSON interpolation
-SESSION_SUMMARY_ESCAPED=$(json_escape "${SESSION_SUMMARY}")
-SESSION_DETAILS_ESCAPED=$(json_escape "${SESSION_DETAILS}")
-BACKGROUND_CONTEXT_ESCAPED=$(json_escape "${BACKGROUND_CONTEXT}")
+# Queue session summary for processing
+bash "${PROJECT_DIR}/scripts/queue-memory.sh" \
+  --memory "${SESSION_SUMMARY}. ${SESSION_DETAILS}" \
+  --background "${BACKGROUND_CONTEXT}" \
+  --importance "normal" 2>/dev/null || true
 
 # Clean up temporary tracking files
 rm -f "${PROJECT_DIR}/.claude-memory-changes.jsonl" \
@@ -76,19 +77,9 @@ rm -f "${PROJECT_DIR}/.claude-memory-changes.jsonl" \
       "${SESSION_FILE}" 2>/dev/null || true
 
 # Output JSON with informational context
-# Claude will automatically invoke mcp__memory-store__record when it sees this
 cat <<EOF
 {
-  "additionalContext": "👋 Session ${SESSION_ID} ending. ${SESSION_SUMMARY}. Details: ${SESSION_DETAILS}.
-
-🤖 MEMORY_STORE_AUTO_RECORD:
-{
-  \"memory\": \"${SESSION_SUMMARY_ESCAPED}. ${SESSION_DETAILS_ESCAPED}\",
-  \"background\": \"${BACKGROUND_CONTEXT_ESCAPED}\",
-  \"importance\": \"normal\"
-}
-
-This session summary should be automatically recorded in Memory Store using the mcp__memory-store__record tool.",
+  "additionalContext": "👋 Session ${SESSION_ID} ending. ${SESSION_SUMMARY}. Details: ${SESSION_DETAILS}. Memory queued.",
   "userMessage": "✓ Session ending! ${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits analyzed over ${DURATION_HUMAN}",
   "continue": true
 }
