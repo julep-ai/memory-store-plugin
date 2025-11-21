@@ -59,6 +59,8 @@ After processing:
 
 ## Implementation
 
+**HYBRID APPROACH**: Hooks provide foundational metadata, Claude adds conversational intelligence.
+
 **ALWAYS check the queue at the start of EVERY response:**
 
 ```javascript
@@ -70,11 +72,25 @@ if (fileExists('.memory-queue.jsonl')) {
     .filter(line => line.trim())
     .map(line => JSON.parse(line));
 
-  // 3. Process each item silently
+  // 3. ENRICH each item with conversational context before storing
   for (const item of queue) {
+    // Hook provided: File: X, Action: created, Session: Y, Language: Z...
+    const foundationalContext = item.background;
+
+    // Claude adds: What's being discussed? What problem is being solved?
+    const conversationalContext = analyzeCurrentContext({
+      recentMessages: last5UserMessages,
+      currentTask: whatUserIsWorkingOn,
+      fileBeingModified: item.memory,
+      projectInfo: loadedFrom_claude_project_context
+    });
+
+    // Combine: Foundational (reliable) + Conversational (intelligent)
+    const enrichedBackground = `${foundationalContext}. Context: ${conversationalContext}`;
+
     await mcp__memory-store__record({
       memory: item.memory,
-      background: item.background,
+      background: enrichedBackground,  // ← Now includes BOTH
       importance: item.importance
     });
   }
@@ -88,13 +104,58 @@ if (fileExists('.memory-queue.jsonl')) {
 
 **Rules**:
 - ✅ **ALWAYS CHECK** - Every single message, no exceptions
+- ✅ **ENRICH CONTEXT** - Add conversation context to hook metadata
 - ✅ **REPORT TO USER** - Tell user what was saved in Memory Store
 - ✅ **FAIL GRACEFULLY** - If error, continue anyway
 - ✅ **BE BRIEF** - Quick confirmation, don't interrupt workflow
 
-## Examples
+**Context Enrichment Strategy**:
+1. **What user is working on**: "Fixing OAuth authentication", "Adding MCP validation", "Refactoring queue system"
+2. **Why this change matters**: "This script validates MCP connection at session start to catch config issues early"
+3. **How it relates to conversation**: "Part of implementing the hybrid context approach discussed with user"
+4. **Project-specific details**: From `.claude-project-context` - architecture, purpose, components
 
-### Example 1: Session Start
+## Hybrid Context Examples
+
+### Example 1: File Change with Conversational Enrichment
+
+**Hook writes (foundational)**:
+```json
+{
+  "memory": "File modified: scripts/session-start.sh (Shell)",
+  "background": "File: scripts/session-start.sh, Action: modified, Session: mem-xyz, Language: Shell, Pattern: , Change: #5, Project: mem-plugin, Version: 1.2.3, Component: script"
+}
+```
+
+**Claude enriches (before storing)**:
+- Sees conversation: User said "add MCP validation at session start"
+- Understands context: This is part of fixing broken MCP detection
+- Reads `.claude-project-context`: Understands mem-plugin architecture
+- **Adds**: "Context: User implementing MCP connection validation at session start. This script now checks if memory-store MCP is configured using `claude mcp list` and displays status/setup command. Part of making the plugin more user-friendly by catching configuration issues early. Related to queue-based architecture where hooks need reliable MCP connection."
+
+**Final stored background**:
+```
+File: scripts/session-start.sh, Action: modified, Session: mem-xyz, Language: Shell, Pattern: , Change: #5, Project: mem-plugin, Version: 1.2.3, Component: script. Context: User implementing MCP connection validation at session start. This script now checks if memory-store MCP is configured using `claude mcp list` and displays status/setup command. Part of making the plugin more user-friendly by catching configuration issues early. Related to queue-based architecture where hooks need reliable MCP connection.
+```
+
+### Example 2: Session Start with Intelligence
+
+**Hook writes (foundational)**:
+```json
+{
+  "memory": "Session mem-20251121-ABC started in mem-plugin on branch main",
+  "background": "Session: mem-20251121-ABC, Started: 2025-11-21T15:00:00Z, Project: mem-plugin, Branch: main, Commit: 7005850, Files: 48, MCP: configured, Version: 1.2.3"
+}
+```
+
+**Claude enriches**:
+- Sees recent commits: "feat: add enriched background context", "feat: add MCP validation"
+- Understands ongoing work: Improving context quality in memory storage
+- **Adds**: "Context: Continuing work on hybrid context approach - hooks provide foundational metadata, Claude adds conversational intelligence. Recent work includes MCP validation and enriched background context. User wants reliable but intelligent memory storage."
+
+**Result**: Future sessions know what was being worked on and why!
+
+### Example 3: Original Approach
 
 **Scenario**: User starts new session, previous session queued 3 items
 

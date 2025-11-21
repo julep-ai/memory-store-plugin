@@ -1,36 +1,24 @@
-# Project Context for Memory Store
-# This file enriches background context for all memory recordings
-# Loaded at session start and included in every memory background
+# Project Context for Memory Store - Loaded by hooks, used by Claude for intelligent enrichment
+# Hooks provide foundational metadata, Claude adds conversational context (HYBRID APPROACH)
 
 PROJECT_NAME="mem-plugin"
 PROJECT_FULL_NAME="Memory Store Plugin for Claude Code"
 PROJECT_TYPE="Claude Code Plugin"
-PROJECT_PURPOSE="Gives Claude persistent memory across sessions via autonomous tracking of file changes, git commits, sessions, and development patterns. Enables Claude to learn from corrections and remember project decisions."
+PROJECT_PURPOSE="Persistent memory across sessions via autonomous tracking"
 
-# Architecture (v1.2.3)
-ARCHITECTURE="Queue-based producer-consumer pattern"
-ARCHITECTURE_DETAILS="Hooks (SessionStart/PreToolUse/SessionEnd) write JSONL entries to .memory-queue.jsonl file. memory-queue-processor skill reads queue on every message, invokes mcp__memory-store__record MCP tool to persist memories. Bypasses hook additionalContext visibility limitation."
-
-# Key Components and Their Roles
-COMPONENT_HOOKS="hooks/ - SessionStart initializes session, PreToolUse tracks file changes, SessionEnd summarizes session"
-COMPONENT_SCRIPTS="scripts/ - queue-memory.sh (queue writer), track-changes.sh (file change detector), session-start.sh (session initializer), session-end.sh (session summarizer)"
-COMPONENT_SKILLS="skills/ - memory-queue-processor (automatic queue consumer), memory-context-retrieval (proactive context loading), git-memory-tracker (manual commit analysis)"
-COMPONENT_COMMANDS="commands/ - /memory-overview (project summary), /memory-status (tracking stats), /memory-recall (context retrieval)"
-
-# Technology Stack
-TECH_STACK="Bash shell scripts, Claude Code plugin API, Memory Store MCP server (https://beta.memory.store/mcp), JSONL queue files, OAuth 2.1 authentication"
-
-# Current Version
+# Current Version & Focus
 VERSION="1.2.3"
-VERSION_FOCUS="Queue-based architecture (fixed from broken signal-based v1.2.2 and broken MCP CLI v1.2.0-1.2.1)"
-VERSION_FEATURES="MCP connection validation at session start, user transparency (reports what's saved), macOS sed compatibility fix"
+VERSION_FOCUS="Hybrid context: Hooks provide metadata, Claude adds intelligence"
 
-# Known Issues
-KNOWN_ISSUE_1="PostToolUse hooks don't fire (Claude Code limitation) - using manual git-memory-tracker skill instead"
-KNOWN_ISSUE_2="Proactive skill activation unreliable (~20-30%) - queue persists items for eventual processing"
-KNOWN_ISSUE_3="Background context too shallow (THIS ISSUE) - implementing rich project metadata"
+# Architecture (for Claude's understanding)
+ARCHITECTURE="Queue-based producer-consumer"
+ARCHITECTURE_KEY="Hooks write .memory-queue.jsonl → memory-queue-processor skill enriches context → MCP stores"
+
+# Component Directory Structure (for file location context)
+COMPONENTS="hooks/ scripts/ skills/ commands/"
 
 # Repository
 REPO_URL="https://github.com/julep-ai/memory-store-plugin"
-REPO_OWNER="julep-ai"
-MARKETPLACE="claude-plugin"
+
+# Note for Claude: Read this file to understand project structure, then add conversational
+# context based on what user is actually working on. Don't just dump all metadata blindly.

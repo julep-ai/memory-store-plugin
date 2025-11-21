@@ -63,32 +63,14 @@ fi
 SESSION_SUMMARY="Session ${SESSION_ID} completed in ${PROJECT_NAME} after ${DURATION_HUMAN}"
 SESSION_DETAILS="${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits analyzed, ${MODIFIED_FILES} files still modified"
 
-# Build enriched comprehensive background context
+# Build foundational background context (Claude will enrich with conversational context)
 END_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-BACKGROUND_CONTEXT="Session ${SESSION_ID} ended at ${END_TIME}."
+BACKGROUND_CONTEXT="Session: ${SESSION_ID}, Ended: ${END_TIME}, Project: ${PROJECT_NAME}, Branch: ${GIT_BRANCH}, Duration: ${DURATION_HUMAN}, Started: ${START_TIME}, Files: ${FILES_TRACKED}, Commits: ${COMMITS_ANALYZED}, Modified: ${MODIFIED_FILES}"
 
-# Add project identity
-if [[ -n "${PROJECT_FULL_NAME:-}" ]]; then
-    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Project: ${PROJECT_FULL_NAME} (${PROJECT_NAME}) - ${PROJECT_PURPOSE:-Development project}."
-else
-    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Project: ${PROJECT_NAME}."
-fi
-
-# Add session metrics
-BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Location: ${PROJECT_DIR}, Branch: ${GIT_BRANCH}. Session duration: ${DURATION_HUMAN} (started ${START_TIME}). Activity: ${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits analyzed, ${MODIFIED_FILES} files still modified."
-
-# Add architecture context
-if [[ -n "${ARCHITECTURE:-}" ]]; then
-    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Architecture: ${ARCHITECTURE}."
-fi
-
-# Add version info
+# Add version if available
 if [[ -n "${VERSION:-}" ]]; then
-    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} Version: ${VERSION}."
+    BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT}, Version: ${VERSION}"
 fi
-
-# Add learning context
-BACKGROUND_CONTEXT="${BACKGROUND_CONTEXT} This session's learnings about ${PROJECT_FULL_NAME:-$PROJECT_NAME} should inform future work on similar features in this ${PROJECT_TYPE:-project}."
 
 # Queue session summary for processing
 bash "${PROJECT_DIR}/scripts/queue-memory.sh" \
