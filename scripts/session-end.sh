@@ -61,41 +61,34 @@ SESSION_DETAILS="${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits ana
 END_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 BACKGROUND_CONTEXT="Session ${SESSION_ID} ended at ${END_TIME} in project ${PROJECT_NAME} (${PROJECT_DIR}) on branch ${GIT_BRANCH}. Started: ${START_TIME}. Duration: ${DURATION_HUMAN}. Files tracked: ${FILES_TRACKED}. Commits analyzed: ${COMMITS_ANALYZED}. Modified files still pending: ${MODIFIED_FILES}. This session's learnings should inform future work on similar features."
 
-# Record session end in Memory Store (async, in background)
-(
-  # Escape all variables for safe JSON interpolation
-  SESSION_SUMMARY_ESCAPED=$(json_escape "${SESSION_SUMMARY}")
-  SESSION_DETAILS_ESCAPED=$(json_escape "${SESSION_DETAILS}")
-  BACKGROUND_CONTEXT_ESCAPED=$(json_escape "${BACKGROUND_CONTEXT}")
-
-  # Build memory payload with escaped variables
-  MEMORY_JSON=$(cat <<RECORD_EOF
-{
-  "memory": "${SESSION_SUMMARY_ESCAPED}. ${SESSION_DETAILS_ESCAPED}",
-  "background": "${BACKGROUND_CONTEXT_ESCAPED}",
-  "importance": "normal"
-}
-RECORD_EOF
-)
-
-  # Invoke MCP tool directly (async)
-  # Show auth/network errors, suppress normal operation noise
-  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>&1 | \
-    grep -iE "(auth|unauthorized|forbidden|connection|network|timeout)" >&2 || true
-
-) &  # Background execution
+# Escape all variables for safe JSON interpolation
+SESSION_SUMMARY_ESCAPED=$(json_escape "${SESSION_SUMMARY}")
+SESSION_DETAILS_ESCAPED=$(json_escape "${SESSION_DETAILS}")
+BACKGROUND_CONTEXT_ESCAPED=$(json_escape "${BACKGROUND_CONTEXT}")
 
 # Clean up temporary tracking files
 rm -f "${PROJECT_DIR}/.claude-memory-changes.jsonl" \
       "${PROJECT_DIR}/.claude-session-changes-count" \
       "${PROJECT_DIR}/.claude-memory-record-request.json" \
       "${PROJECT_DIR}/.claude-memory-session-end.json" \
+      "${PROJECT_DIR}/.claude-session-overview.json" \
+      "${PROJECT_DIR}/.claude-session-recall.json" \
       "${SESSION_FILE}" 2>/dev/null || true
 
 # Output JSON with informational context
+# Claude will automatically invoke mcp__memory-store__record when it sees this
 cat <<EOF
 {
-  "additionalContext": "👋 Session ${SESSION_ID} ending. ${SESSION_SUMMARY}. Details: ${SESSION_DETAILS}. Memory Store has captured this session automatically.",
+  "additionalContext": "👋 Session ${SESSION_ID} ending. ${SESSION_SUMMARY}. Details: ${SESSION_DETAILS}.
+
+🤖 MEMORY_STORE_AUTO_RECORD:
+{
+  \"memory\": \"${SESSION_SUMMARY_ESCAPED}. ${SESSION_DETAILS_ESCAPED}\",
+  \"background\": \"${BACKGROUND_CONTEXT_ESCAPED}\",
+  \"importance\": \"normal\"
+}
+
+This session summary should be automatically recorded in Memory Store using the mcp__memory-store__record tool.",
   "userMessage": "✓ Session ending! ${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits analyzed over ${DURATION_HUMAN}",
   "continue": true
 }

@@ -48,54 +48,45 @@ CLAUDE_MD_COUNT=$(find "${PROJECT_DIR}" -name "CLAUDE.md" -o -name "claude.md" 2
 # Count files in project (limit search for performance)
 FILE_COUNT=$(find "${PROJECT_DIR}" -type f -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | wc -l | tr -d ' ')
 
-# Record session start in Memory Store (async, in background)
-# This runs independently of Claude's conversation flow
-(
-  # Escape all variables for safe JSON interpolation
-  SESSION_ID_ESCAPED=$(json_escape "${SESSION_ID}")
-  PROJECT_NAME_ESCAPED=$(json_escape "${PROJECT_NAME}")
-  GIT_BRANCH_ESCAPED=$(json_escape "${GIT_BRANCH}")
-  PROJECT_DIR_ESCAPED=$(json_escape "${PROJECT_DIR}")
-  START_TIME_ESCAPED=$(json_escape "${START_TIME}")
-  RECENT_COMMITS_ESCAPED=$(json_escape "${RECENT_COMMITS}")
-  GIT_COMMIT_ESCAPED=$(json_escape "${GIT_COMMIT}")
+# Escape all variables for safe JSON interpolation
+SESSION_ID_ESCAPED=$(json_escape "${SESSION_ID}")
+PROJECT_NAME_ESCAPED=$(json_escape "${PROJECT_NAME}")
+GIT_BRANCH_ESCAPED=$(json_escape "${GIT_BRANCH}")
+PROJECT_DIR_ESCAPED=$(json_escape "${PROJECT_DIR}")
+START_TIME_ESCAPED=$(json_escape "${START_TIME}")
+RECENT_COMMITS_ESCAPED=$(json_escape "${RECENT_COMMITS}")
+GIT_COMMIT_ESCAPED=$(json_escape "${GIT_COMMIT}")
 
-  # Build memory payload as JSON with escaped variables
-  MEMORY_JSON=$(cat <<RECORD_EOF
-{
-  "memory": "Session ${SESSION_ID_ESCAPED} started in ${PROJECT_NAME_ESCAPED} on branch ${GIT_BRANCH_ESCAPED}",
-  "background": "Project directory: ${PROJECT_DIR_ESCAPED}. Start time: ${START_TIME_ESCAPED}. Files: ${FILE_COUNT}. CLAUDE.md files: ${CLAUDE_MD_COUNT}. Recent commits: ${RECENT_COMMITS_ESCAPED}. Current commit: ${GIT_COMMIT_ESCAPED}.",
-  "importance": "normal"
-}
-RECORD_EOF
-)
+# Build background context
+BACKGROUND_CONTEXT="Project directory: ${PROJECT_DIR_ESCAPED}. Start time: ${START_TIME_ESCAPED}. Files: ${FILE_COUNT}. CLAUDE.md files: ${CLAUDE_MD_COUNT}. Recent commits: ${RECENT_COMMITS_ESCAPED}. Current commit: ${GIT_COMMIT_ESCAPED}."
 
-  # Invoke MCP tool directly via claude CLI (captures async)
-  # Show auth/network errors, suppress normal operation noise
-  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>&1 | \
-    grep -iE "(auth|unauthorized|forbidden|connection|network|timeout)" >&2 || true
+# Build recall cues for context retrieval
+RECALL_CUES_ESCAPED=$(json_escape "${PROJECT_NAME}, ${GIT_BRANCH}, recent work, session, commit")
+RECALL_BG_ESCAPED=$(json_escape "Session start in ${PROJECT_NAME} on ${GIT_BRANCH}. Loading recent context to understand current work.")
 
-) &  # Run in background to avoid blocking session start
-
-# Load project overview from Memory Store (async, in background)
-# This retrieves relevant context to help Claude understand the project
-(
-  # Invoke overview with 'standard' mode for quick context load
-  claude mcp call memory-store overview --mode standard 2>/dev/null > "${PROJECT_DIR}/.claude-session-overview.json" || true
-
-  # Also recall recent work on this project/branch
-  RECALL_CUES='["'${PROJECT_NAME}'", "'${GIT_BRANCH}'", "recent work", "session", "commit"]'
-  RECALL_BG="Session start in ${PROJECT_NAME} on ${GIT_BRANCH}. Loading recent context to understand current work."
-
-  echo "{\"cues\": ${RECALL_CUES}, \"background\": \"${RECALL_BG}\", \"k\": 5}" | \
-    claude mcp call memory-store recall 2>/dev/null > "${PROJECT_DIR}/.claude-session-recall.json" || true
-
-) &  # Run in background
-
-# Output JSON to inform Claude about the session (non-blocking)
+# Output JSON to inform Claude about the session
+# Claude will automatically invoke MCP tools when it sees these instructions
 cat <<EOF
 {
-  "additionalContext": "🚀 Session ${SESSION_ID} started in ${PROJECT_NAME}/${GIT_BRANCH} at ${START_TIME}. Project has ${FILE_COUNT} files, ${CLAUDE_MD_COUNT} CLAUDE.md files. Recent commits: ${RECENT_COMMITS}. Memory Store is loading project overview and recent context automatically in the background.",
+  "additionalContext": "🚀 Session ${SESSION_ID} started in ${PROJECT_NAME}/${GIT_BRANCH} at ${START_TIME}.
+
+📊 Project snapshot: ${FILE_COUNT} files, ${CLAUDE_MD_COUNT} CLAUDE.md files.
+📝 Recent commits: ${RECENT_COMMITS}
+
+🤖 MEMORY_STORE_AUTO_RECORD:
+{
+  \"memory\": \"Session ${SESSION_ID_ESCAPED} started in ${PROJECT_NAME_ESCAPED} on branch ${GIT_BRANCH_ESCAPED}\",
+  \"background\": \"${BACKGROUND_CONTEXT}\",
+  \"importance\": \"normal\"
+}
+
+🤖 MEMORY_STORE_AUTO_RECALL:
+Please automatically invoke mcp__memory-store__recall with cues: [\"${PROJECT_NAME_ESCAPED}\", \"${GIT_BRANCH_ESCAPED}\", \"recent work\", \"session\", \"patterns\"] to load relevant context from previous sessions.
+
+🤖 MEMORY_STORE_AUTO_OVERVIEW:
+Please automatically invoke mcp__memory-store__overview with mode: \"basic\" to understand the current project state.
+
+This session initialization should be automatically processed using Memory Store MCP tools.",
   "continue": true
 }
 EOF

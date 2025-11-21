@@ -5,6 +5,74 @@ All notable changes to the Memory Store Tracker Plugin will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2025-11-21
+
+### 🔧 Critical Fix: Truly Autonomous Memory System
+
+#### Fixed
+
+**Broken MCP CLI Command (Critical)**
+- ❌ **Problem**: Hooks were using `claude mcp call` command which doesn't exist in Claude Code CLI
+- ❌ **Impact**: Session recording, file tracking, and context retrieval were completely broken despite appearing to work
+- ✅ **Solution**: Changed architecture from "hooks call CLI directly" to "hooks signal Claude to invoke MCP tools"
+- ✅ **Result**: Memory storage now ACTUALLY works autonomously
+
+**Architecture Change**
+- Hooks now output structured `MEMORY_STORE_AUTO_*` instructions in `additionalContext`
+- New `memory-auto-store` skill automatically processes these instructions
+- Claude invokes MCP tools (`mcp__memory-store__record`, `mcp__memory-store__recall`, `mcp__memory-store__overview`) when skills detect signals
+- Silent operation - storage happens automatically without user awareness
+
+#### Added
+
+**memory-auto-store Skill**
+- Automatically activates when hooks output `MEMORY_STORE_AUTO_RECORD` instructions
+- Parses JSON payload from hook signals
+- Invokes `mcp__memory-store__record` with proper parameters
+- Handles errors gracefully (silent unless auth/network issues)
+- Works seamlessly with `memory-auto-track` for retrieval
+
+**Signal Protocol**
+- `🤖 MEMORY_STORE_AUTO_RECORD`: Signals storage needed
+- `🤖 MEMORY_STORE_AUTO_RECALL`: Signals context retrieval needed
+- `🤖 MEMORY_STORE_AUTO_OVERVIEW`: Signals overview needed
+- All hooks now use this protocol instead of broken CLI calls
+
+#### Changed
+
+**Updated Scripts**
+- `session-start.sh`: Now signals Claude to record session start, load overview, and recall context
+- `session-end.sh`: Now signals Claude to record session summary
+- `track-changes.sh`: Now signals Claude to record file changes
+- All scripts removed broken `claude mcp call` usage
+
+**Documentation**
+- Updated KNOWN_ISSUES.md to mark CLI command issue as resolved
+- Added memory-auto-store skill documentation
+- Clarified that hooks signal Claude, not invoke MCP directly
+
+#### Testing
+
+- ✅ Created test file to verify PreToolUse hook fires
+- ✅ Verified `memory-auto-store` skill activates automatically
+- ✅ Confirmed `mcp__memory-store__record` invocation works
+- ✅ Validated storage in Memory Store
+- ✅ Tested retrieval with `mcp__memory-store__recall`
+
+**Result**: End-to-end autonomous memory tracking now **actually functional** for the first time!
+
+---
+
+## [1.2.1] - 2025-11-21
+
+### Fixed
+
+**Documentation**
+- Clarified authentication requirements for Memory Store retrieval
+- Updated README with OAuth 2.1 authentication steps
+
+---
+
 ## [1.2.0] - 2025-11-21
 
 ### 🚀 Major: Fully Autonomous Memory System

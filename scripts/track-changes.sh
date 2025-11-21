@@ -173,39 +173,33 @@ if [[ "${FILE_PATH}" =~ plugin\.json$ ]] || \
     IMPORTANCE="high"
 fi
 
-# Record file change in Memory Store (async, in background)
-(
-  # Escape all variables for safe JSON interpolation
-  MEMORY_ESCAPED=$(json_escape "${MEMORY_TEXT}")
-  REL_PATH_ESCAPED=$(json_escape "${REL_PATH}")
-  CHANGE_TYPE_ESCAPED=$(json_escape "${CHANGE_TYPE}")
-  SESSION_ID_ESCAPED=$(json_escape "${SESSION_ID}")
-  FILE_LANG_ESCAPED=$(json_escape "${FILE_LANG}")
-  PATTERNS_ESCAPED=$(json_escape "${PATTERNS_DETECTED}")
-  PROJECT_NAME=$(basename "${PROJECT_DIR}")
-  PROJECT_ESCAPED=$(json_escape "${PROJECT_NAME}")
+# Escape all variables for safe JSON interpolation
+MEMORY_ESCAPED=$(json_escape "${MEMORY_TEXT}")
+REL_PATH_ESCAPED=$(json_escape "${REL_PATH}")
+CHANGE_TYPE_ESCAPED=$(json_escape "${CHANGE_TYPE}")
+SESSION_ID_ESCAPED=$(json_escape "${SESSION_ID}")
+FILE_LANG_ESCAPED=$(json_escape "${FILE_LANG}")
+PATTERNS_ESCAPED=$(json_escape "${PATTERNS_DETECTED}")
+PROJECT_NAME=$(basename "${PROJECT_DIR}")
+PROJECT_ESCAPED=$(json_escape "${PROJECT_NAME}")
 
-  # Build memory payload with escaped variables
-  MEMORY_JSON=$(cat <<RECORD_EOF
-{
-  "memory": "${MEMORY_ESCAPED}",
-  "background": "File ${REL_PATH_ESCAPED} was ${CHANGE_TYPE_ESCAPED} in session ${SESSION_ID_ESCAPED}. Language: ${FILE_LANG_ESCAPED}. Pattern: ${PATTERNS_ESCAPED}. Change #${CHANGES_COUNT}. Project: ${PROJECT_ESCAPED}.",
-  "importance": "${IMPORTANCE}"
-}
-RECORD_EOF
-)
+# Build background context
+BACKGROUND_CONTEXT="File ${REL_PATH_ESCAPED} was ${CHANGE_TYPE_ESCAPED} in session ${SESSION_ID_ESCAPED}. Language: ${FILE_LANG_ESCAPED}. Pattern: ${PATTERNS_ESCAPED}. Change #${CHANGES_COUNT}. Project: ${PROJECT_ESCAPED}."
 
-  # Invoke MCP tool directly (async)
-  # Show auth/network errors, suppress normal operation noise
-  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>&1 | \
-    grep -iE "(auth|unauthorized|forbidden|connection|network|timeout)" >&2 || true
-
-) &  # Background execution
-
-# Output JSON with informational context
+# Output JSON with structured memory tracking instruction for Claude
+# Claude will automatically invoke mcp__memory-store__record when it sees this
 cat <<EOF
 {
-  "additionalContext": "📝 ${MEMORY_TEXT}. Session: ${SESSION_ID}, Change #${CHANGES_COUNT}. Automatically tracked in Memory Store.",
+  "additionalContext": "📝 ${MEMORY_TEXT}. Session: ${SESSION_ID}, Change #${CHANGES_COUNT}.
+
+🤖 MEMORY_STORE_AUTO_RECORD:
+{
+  \"memory\": \"${MEMORY_ESCAPED}\",
+  \"background\": \"${BACKGROUND_CONTEXT}\",
+  \"importance\": \"${IMPORTANCE}\"
+}
+
+This file change should be automatically recorded in Memory Store using the mcp__memory-store__record tool.",
   ${CHECKPOINT_MSG:+"userMessage": "$CHECKPOINT_MSG",}
   "continue": true
 }

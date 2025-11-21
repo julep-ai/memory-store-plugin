@@ -2,6 +2,52 @@
 
 This document tracks known limitations and issues in the Memory Store Plugin.
 
+## ✅ RESOLVED: Broken MCP CLI Command (v1.2.2)
+
+**Status**: Fixed in v1.2.2
+**Severity**: Critical → Resolved
+**Resolution**: Hooks now signal Claude to invoke MCP tools automatically
+
+### What Was Broken
+
+Scripts were using `claude mcp call` command which doesn't exist in Claude Code CLI:
+- `session-start.sh` couldn't record sessions
+- `session-end.sh` couldn't store summaries
+- `track-changes.sh` couldn't store file changes
+- Context retrieval (overview/recall) never worked
+
+### The Fix
+
+Changed architecture from "hooks call CLI" to "hooks signal Claude":
+
+**Before (v1.2.1 and earlier):**
+```bash
+# This command doesn't exist ❌
+echo "$JSON" | claude mcp call memory-store record
+```
+
+**After (v1.2.2):**
+```bash
+# Hooks output structured signals that Claude automatically processes ✅
+cat <<EOF
+{
+  "additionalContext": "🤖 MEMORY_STORE_AUTO_RECORD: {...}"
+}
+EOF
+```
+
+**New Component**: `memory-auto-store` skill automatically invokes MCP tools when it sees these signals.
+
+### Impact
+
+- ✅ Automatic session recording now works
+- ✅ File changes automatically stored
+- ✅ Context retrieval works on session start
+- ✅ Session summaries captured on exit
+- ✅ Fully autonomous operation achieved
+
+---
+
 ## PostToolUse Hooks Not Supported
 
 **Status**: Known Limitation

@@ -1,6 +1,6 @@
 {
   "name": "memory-store",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Gives Claude persistent memory across sessions. Fully autonomous memory tracking - works immediately after install with zero configuration. Records corrections, patterns, and decisions automatically. Optional intelligence layer for proactive pattern following.",
   "author": {
     "name": "Autotelic Team",
