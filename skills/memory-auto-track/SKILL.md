@@ -1,50 +1,51 @@
 ---
 description: Automatically track development context and retrieve relevant memories when needed
+proactive: true
 ---
 
 # Memory Auto-Track Skill
 
+**⚡ IMPORTANT: This skill is ALWAYS ACTIVE. Use it automatically whenever the user asks questions.**
+
 ## Purpose
 
-**Bidirectional memory management** for Claude Code:
-1. **Store**: Automatically store development events (file changes, commits, sessions) using `mcp__memory__record`
-2. **Retrieve**: Proactively retrieve relevant context using `mcp__memory__recall` when Claude needs guidance
+**Automatic memory search** integrated into conversation:
+- **ALWAYS search memory** when user asks ANY question about the project
+- **Check for established patterns** before suggesting implementations
+- **Surface relevant past work** automatically
+- **No manual /memory-recall needed** - you do it automatically
 
-## When to Invoke
+**Note**: Storage is handled automatically by hooks. This skill makes retrieval AUTOMATIC.
 
-### Part 1: Storing Memories (Reactive)
+## When to Search Memory (Automatically!)
 
-Activate when you receive `additionalContext` from hooks that contains:
-- "Store this in memory"
-- "should be stored in memory using memory__record"
-- "Track this"
-- Explicit instructions like "using memory__record with importance: [level]"
+**ALWAYS invoke mcp__memory-store__recall when:**
 
-### Part 2: Retrieving Context (Proactive)
+1. **User asks ANY question about the project**
+   - "How did we implement X?"
+   - "What patterns do we use?"
+   - "Why did we choose Y?"
+   - **→ AUTOMATICALLY search memory BEFORE answering**
 
-**Automatically retrieve memories** when:
+2. **User asks you to implement something**
+   - "Create an API endpoint"
+   - "Add authentication"
+   - "Fix the bug in X"
+   - **→ AUTOMATICALLY search for similar past work**
 
-1. **User asks about past work**
-   - "What did we do with authentication?"
-   - "How did we implement the API?"
-   - "What patterns have we used?"
+3. **User asks about team/ownership**
+   - "Who worked on X?"
+   - "What does the team use for Y?"
+   - **→ AUTOMATICALLY search memory**
 
-2. **Starting new work similar to past work**
-   - User: "Create an API endpoint for users"
-   - You should recall: Past API endpoint implementations, patterns used
+4. **User mentions uncertainty**
+   - "I'm not sure how we..."
+   - "What's our convention for..."
+   - **→ AUTOMATICALLY search memory**
 
-3. **When uncertain about project conventions**
-   - Before suggesting an approach, check if similar work exists
-   - Look for established patterns, team decisions
-
-4. **When you might be going off track**
-   - If you're about to suggest something that differs from past patterns
-   - Retrieve context first to ensure consistency
-
-5. **At session start** (optional but helpful)
-   - Retrieve recent work on this project
-   - Load context about the current branch
-   - Understand what was being worked on
+5. **You're about to suggest something**
+   - Before proposing an approach
+   - **→ AUTOMATICALLY search to check for existing patterns**
 
 **Cues for retrieval:**
 - Project name

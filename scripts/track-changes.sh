@@ -4,6 +4,17 @@
 
 set -euo pipefail
 
+# JSON escape function to prevent command injection
+json_escape() {
+    # Escape backslashes, quotes, newlines, tabs, and control characters
+    printf '%s' "$1" | \
+        sed 's/\\/\\\\/g' | \
+        sed 's/"/\\"/g' | \
+        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        sed 's/\t/\\t/g' | \
+        sed 's/\r/\\r/g'
+}
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 
 # Load session state from project-local file
@@ -48,6 +59,35 @@ fi
 # Get relative path from project root
 REL_PATH=$(realpath --relative-to="${PROJECT_DIR}" "${FILE_PATH}" 2>/dev/null || basename "${FILE_PATH}")
 
+# Intelligent filtering: Skip files that don't need tracking
+SHOULD_SKIP="false"
+
+# Skip auto-generated, temporary, or trivial files
+if [[ "${FILE_PATH}" =~ \.log$ ]] || \
+   [[ "${FILE_PATH}" =~ \.tmp$ ]] || \
+   [[ "${FILE_PATH}" =~ node_modules/ ]] || \
+   [[ "${FILE_PATH}" =~ \.next/ ]] || \
+   [[ "${FILE_PATH}" =~ dist/ ]] || \
+   [[ "${FILE_PATH}" =~ build/ ]] || \
+   [[ "${FILE_PATH}" =~ __pycache__/ ]] || \
+   [[ "${FILE_PATH}" =~ \.pyc$ ]] || \
+   [[ "${FILE_PATH}" =~ package-lock\.json$ ]] || \
+   [[ "${FILE_PATH}" =~ yarn\.lock$ ]] || \
+   [[ "${FILE_PATH}" =~ pnpm-lock\.yaml$ ]] || \
+   [[ "${FILE_PATH}" =~ \.min\. ]]; then
+    SHOULD_SKIP="true"
+fi
+
+# Exit silently if we should skip
+if [[ "${SHOULD_SKIP}" == "true" ]]; then
+    cat <<EOF
+{
+  "continue": true
+}
+EOF
+    exit 0
+fi
+
 # Determine if this is a new file or modification
 if git ls-files --error-unmatch "${FILE_PATH}" > /dev/null 2>&1; then
     CHANGE_TYPE="modified"
@@ -65,6 +105,8 @@ case "${FILE_EXT}" in
     rs) FILE_LANG="Rust" ;;
     md) FILE_LANG="Markdown" ;;
     json) FILE_LANG="JSON" ;;
+    yml|yaml) FILE_LANG="YAML" ;;
+    toml) FILE_LANG="TOML" ;;
     *) FILE_LANG="Unknown" ;;
 esac
 
@@ -110,10 +152,58 @@ if [[ $((CHANGES_COUNT % 10)) -eq 0 ]]; then
     CHECKPOINT_MSG="✓ Checkpoint: ${CHANGES_COUNT} files tracked this session"
 fi
 
-# Output JSON to trigger memory storage and show checkpoint
+# Intelligent importance detection
+IMPORTANCE="low"  # Default for most files
+
+# High importance: Core architecture, config, important docs
+if [[ "${FILE_PATH}" =~ CLAUDE\.md$ ]] || \
+   [[ "${FILE_PATH}" =~ README\.md$ ]] || \
+   [[ "${FILE_PATH}" =~ package\.json$ ]] || \
+   [[ "${FILE_PATH}" =~ tsconfig\.json$ ]] || \
+   [[ "${FILE_PATH}" =~ docker ]] || \
+   [[ "${FILE_PATH}" =~ \.env ]] || \
+   [[ "${PATTERNS_DETECTED}" =~ "API endpoint" ]] || \
+   [[ "${PATTERNS_DETECTED}" =~ "Data model" ]]; then
+    IMPORTANCE="normal"
+fi
+
+# Very high importance: Critical configuration
+if [[ "${FILE_PATH}" =~ plugin\.json$ ]] || \
+   [[ "${FILE_PATH}" =~ hooks\.json$ ]]; then
+    IMPORTANCE="high"
+fi
+
+# Record file change in Memory Store (async, in background)
+(
+  # Escape all variables for safe JSON interpolation
+  MEMORY_ESCAPED=$(json_escape "${MEMORY_TEXT}")
+  REL_PATH_ESCAPED=$(json_escape "${REL_PATH}")
+  CHANGE_TYPE_ESCAPED=$(json_escape "${CHANGE_TYPE}")
+  SESSION_ID_ESCAPED=$(json_escape "${SESSION_ID}")
+  FILE_LANG_ESCAPED=$(json_escape "${FILE_LANG}")
+  PATTERNS_ESCAPED=$(json_escape "${PATTERNS_DETECTED}")
+  PROJECT_NAME=$(basename "${PROJECT_DIR}")
+  PROJECT_ESCAPED=$(json_escape "${PROJECT_NAME}")
+
+  # Build memory payload with escaped variables
+  MEMORY_JSON=$(cat <<RECORD_EOF
+{
+  "memory": "${MEMORY_ESCAPED}",
+  "background": "File ${REL_PATH_ESCAPED} was ${CHANGE_TYPE_ESCAPED} in session ${SESSION_ID_ESCAPED}. Language: ${FILE_LANG_ESCAPED}. Pattern: ${PATTERNS_ESCAPED}. Change #${CHANGES_COUNT}. Project: ${PROJECT_ESCAPED}.",
+  "importance": "${IMPORTANCE}"
+}
+RECORD_EOF
+)
+
+  # Invoke MCP tool directly (async)
+  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>/dev/null || true
+
+) &  # Background execution
+
+# Output JSON with informational context
 cat <<EOF
 {
-  "additionalContext": "📝 ${MEMORY_TEXT}. Session: ${SESSION_ID}, Project: $(basename ${PROJECT_DIR}). Store this in memory using memory__record with importance: low, background: 'File ${REL_PATH} was ${CHANGE_TYPE} in session ${SESSION_ID}. Language: ${FILE_LANG}. Pattern: ${PATTERNS_DETECTED}. Change #${CHANGES_COUNT}.'",
+  "additionalContext": "📝 ${MEMORY_TEXT}. Session: ${SESSION_ID}, Change #${CHANGES_COUNT}. Automatically tracked in Memory Store.",
   ${CHECKPOINT_MSG:+"userMessage": "$CHECKPOINT_MSG",}
   "continue": true
 }

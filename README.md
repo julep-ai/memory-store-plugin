@@ -4,48 +4,36 @@
 
 A comprehensive Claude Code plugin that automatically tracks your development flow, captures session context, analyzes git commits, and maintains team knowledge across projects.
 
-## Quick Start (3 Minutes)
+## Quick Start (60 Seconds)
 
-**IMPORTANT**: Both the plugin AND the MCP server are required for automatic tracking to work:
-- **Plugin**: Provides automatic hooks that track your development activity
-- **MCP Server**: Stores the tracked data persistently
-
-### 1. Install the Plugin
+### Three Simple Steps:
 
 ```bash
-# Add the marketplace
+# 1. Add marketplace
 claude plugin marketplace add julep-ai/memory-store-plugin
 
-# Install the plugin
-claude plugin install memory-store@claude-plugin
+# 2. Install plugin
+claude plugin install memory-store
+
+# 3. Add Memory Store MCP server
+claude mcp add memory-store https://beta.memory.store/mcp
 ```
 
-✅ This enables automatic tracking hooks
+**That's it!** OAuth authentication will open in your browser. Authenticate once and you're done.
 
-### 2. Configure Memory Store MCP Server
-
-```bash
-# Add the Memory Store MCP server
-claude mcp add memory-store -t http https://beta.memory.store/mcp
-```
-
-✅ This enables persistent memory storage
-
-The OAuth authentication flow will open in your browser. Authenticate once and you're all set!
-
-### 3. Verify Automatic Tracking
+### Start Using:
 
 ```bash
 cd your-project
 claude
 ```
 
-Check that everything is working:
+Memory tracking works automatically. Check it's running:
 ```
-/memory-store:memory-status
+/memory-status
 ```
 
-You should see session tracking active!
+You should see active session tracking!
 
 ## What Gets Tracked Automatically
 
@@ -75,7 +63,13 @@ Once installed, the plugin **automatically tracks** (no manual commands needed):
 - ✅ **Before compression**: Saves important context automatically
 - ✅ **Preserves decisions**: Key reasoning and patterns retained
 
-## No Manual Work Required!
+## Zero Configuration - Just Ask Questions!
+
+The plugin automatically:
+- ✅ Tracks your work in the background
+- ✅ Searches memory when you ask questions
+- ✅ Loads context at session start
+- ✅ Preserves debugging state
 
 Just use Claude Code normally:
 ```bash
@@ -121,21 +115,10 @@ Claude: [Creates auth.ts]
 
 ### 🔧 Custom Slash Commands
 - `/memory-status` - View current tracking status and statistics
-- `/memory-sync` - Manually synchronize project state to memory
-- `/memory-context [query]` - Retrieve relevant context for current work
 - `/memory-overview` - Generate comprehensive project overview
-- `/checkpoint` - Trigger progress validation checkpoint
-- `/correct "explanation"` - Correct Claude's mistakes with high-priority learning
-- `/session-feedback` - View current session quality rating
-- `/validate-changes` - Pre-commit validation with security checks
+- `/memory-recall [query]` - Retrieve relevant context (usually automatic)
 
-### 🎯 Interactive Validation & Feedback
-- **Progress Checkpoints**: Auto-validates after every 10 file changes
-- **Pre-commit Validation**: Reviews changes before commits with security checks
-- **Correction System**: Record mistakes with `/correct` for high-priority learning
-- **Session Quality Tracking**: Automatic feedback based on corrections needed
-- **Security Scanning**: Detects potential secrets, tokens, and debug code
-- **Semantic Commit Reminders**: Encourages proper commit message conventions
+**Note**: You rarely need `/memory-recall` - Claude automatically searches memory when you ask questions!
 
 ## Installation
 
@@ -241,12 +224,8 @@ You don't need to do anything - it just works!
 | Command | What It Does |
 |---------|--------------|
 | `/memory-status` | Show tracking status |
-| `/memory-sync` | Manually sync to memory |
-| `/memory-context [query]` | Get relevant context |
 | `/memory-overview` | Generate project overview |
-| `/checkpoint` | Trigger validation checkpoint |
-| `/correct "msg"` | Record correction (high priority) |
-| `/session-feedback` | View session quality |
+| `/memory-recall [query]` | Get relevant context (usually automatic) |
 
 ### Example Workflow
 
@@ -268,12 +247,6 @@ Plugin tracks all your changes automatically
 git commit -m "feat: add OAuth2 authentication"
 ```
 Plugin analyzes and stores commit context
-
-**Correct Mistakes**
-```
-/correct "We use OAuth2, not JWT. Decided Nov 6 for better token security."
-```
-Claude will remember this correction forever
 
 **End Session**
 ```
@@ -411,9 +384,8 @@ If your team works on multiple related projects:
 
 - **Use conventional commit messages**: `feat:`, `fix:`, `docs:`, etc.
 - **Keep CLAUDE.md files updated**: Document patterns as you establish them
-- **Run `/memory-sync` after major features**: Capture important milestones
-- **Use `/memory-context` when starting new work**: Check for similar implementations
-- **Correct Claude with `/correct`**: High-priority learning that persists forever
+- **Trust the automatic tracking**: The plugin captures everything in the background
+- **Use `/memory-overview` periodically**: Get a comprehensive project snapshot
 
 ### ❌ Avoid This
 

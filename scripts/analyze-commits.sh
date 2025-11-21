@@ -4,6 +4,16 @@
 
 set -euo pipefail
 
+# JSON escape function to prevent command injection
+json_escape() {
+    printf '%s' "$1" | \
+        sed 's/\\/\\\\/g' | \
+        sed 's/"/\\"/g' | \
+        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        sed 's/\t/\\t/g' | \
+        sed 's/\r/\\r/g'
+}
+
 # Read and discard stdin (hook protocol requirement)
 if [ ! -t 0 ]; then
     cat > /dev/null
@@ -81,16 +91,16 @@ if [[ "${COMMIT_BRANCH}" =~ /([A-Z]+-[0-9]+) ]]; then
     TICKET_NUMBER="${BASH_REMATCH[1]}"
 fi
 
-# Increment commit counter
+# Increment commit counter in session file
+SESSION_FILE="${PROJECT_DIR}/.claude-session"
 COMMITS_COUNT=$((${MEMORY_COMMITS_COUNT:-0} + 1))
 
-# Update environment file
-if [[ -n "${CLAUDE_ENV_FILE:-}" ]]; then
-    if grep -q "MEMORY_COMMITS_COUNT=" "${CLAUDE_ENV_FILE}" 2>/dev/null; then
-        sed -i.bak "s/MEMORY_COMMITS_COUNT=.*/MEMORY_COMMITS_COUNT=${COMMITS_COUNT}/" "${CLAUDE_ENV_FILE}"
-        rm -f "${CLAUDE_ENV_FILE}.bak"
+if [[ -f "${SESSION_FILE}" ]]; then
+    if grep -q "MEMORY_COMMITS_COUNT=" "${SESSION_FILE}" 2>/dev/null; then
+        sed -i.bak "s/MEMORY_COMMITS_COUNT=.*/MEMORY_COMMITS_COUNT=${COMMITS_COUNT}/" "${SESSION_FILE}"
+        rm -f "${SESSION_FILE}.bak"
     else
-        echo "export MEMORY_COMMITS_COUNT=${COMMITS_COUNT}" >> "${CLAUDE_ENV_FILE}"
+        echo "MEMORY_COMMITS_COUNT=${COMMITS_COUNT}" >> "${SESSION_FILE}"
     fi
 fi
 
@@ -112,10 +122,31 @@ fi
 # Build detailed context for memory
 BACKGROUND_CONTEXT="Commit ${COMMIT_HASH} on branch ${COMMIT_BRANCH}. Type: ${COMMIT_TYPE}. Files changed: ${FILES_COUNT}. Additions: ${ADDITIONS}, Deletions: ${DELETIONS}. Important files: ${IMPORTANT_FILES_AFFECTED}. Breaking change: ${BREAKING_CHANGE}. Author: ${COMMIT_AUTHOR}. Date: ${COMMIT_DATE}. Session: ${SESSION_ID}. This is commit #${COMMITS_COUNT} in this session."
 
-# Output JSON with additionalContext
+# Record commit in Memory Store (async, in background)
+(
+  # Escape all variables for safe JSON interpolation
+  COMMIT_SUMMARY_ESCAPED=$(json_escape "${COMMIT_SUMMARY}")
+  BACKGROUND_CONTEXT_ESCAPED=$(json_escape "${BACKGROUND_CONTEXT}")
+
+  # Build memory payload with escaped variables
+  MEMORY_JSON=$(cat <<RECORD_EOF
+{
+  "memory": "${COMMIT_SUMMARY_ESCAPED}",
+  "background": "${BACKGROUND_CONTEXT_ESCAPED}",
+  "importance": "${IMPORTANCE}"
+}
+RECORD_EOF
+)
+
+  # Invoke MCP tool directly (async)
+  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>/dev/null || true
+
+) &  # Background execution
+
+# Output JSON with informational context
 cat <<EOF
 {
-  "additionalContext": "💾 ${COMMIT_SUMMARY}. Store this commit in memory using memory__record with importance: ${IMPORTANCE}, background: '${BACKGROUND_CONTEXT}'",
+  "additionalContext": "💾 ${COMMIT_SUMMARY}. Commit #${COMMITS_COUNT} automatically tracked in Memory Store.",
   "continue": true
 }
 EOF

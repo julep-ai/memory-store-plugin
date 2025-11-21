@@ -4,6 +4,16 @@
 
 set -euo pipefail
 
+# JSON escape function to prevent command injection
+json_escape() {
+    printf '%s' "$1" | \
+        sed 's/\\/\\\\/g' | \
+        sed 's/"/\\"/g' | \
+        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        sed 's/\t/\\t/g' | \
+        sed 's/\r/\\r/g'
+}
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 
 # Load session state from project-local file
@@ -51,6 +61,28 @@ SESSION_DETAILS="${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits ana
 END_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 BACKGROUND_CONTEXT="Session ${SESSION_ID} ended at ${END_TIME} in project ${PROJECT_NAME} (${PROJECT_DIR}) on branch ${GIT_BRANCH}. Started: ${START_TIME}. Duration: ${DURATION_HUMAN}. Files tracked: ${FILES_TRACKED}. Commits analyzed: ${COMMITS_ANALYZED}. Modified files still pending: ${MODIFIED_FILES}. This session's learnings should inform future work on similar features."
 
+# Record session end in Memory Store (async, in background)
+(
+  # Escape all variables for safe JSON interpolation
+  SESSION_SUMMARY_ESCAPED=$(json_escape "${SESSION_SUMMARY}")
+  SESSION_DETAILS_ESCAPED=$(json_escape "${SESSION_DETAILS}")
+  BACKGROUND_CONTEXT_ESCAPED=$(json_escape "${BACKGROUND_CONTEXT}")
+
+  # Build memory payload with escaped variables
+  MEMORY_JSON=$(cat <<RECORD_EOF
+{
+  "memory": "${SESSION_SUMMARY_ESCAPED}. ${SESSION_DETAILS_ESCAPED}",
+  "background": "${BACKGROUND_CONTEXT_ESCAPED}",
+  "importance": "normal"
+}
+RECORD_EOF
+)
+
+  # Invoke MCP tool directly (async)
+  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>/dev/null || true
+
+) &  # Background execution
+
 # Clean up temporary tracking files
 rm -f "${PROJECT_DIR}/.claude-memory-changes.jsonl" \
       "${PROJECT_DIR}/.claude-session-changes-count" \
@@ -58,10 +90,10 @@ rm -f "${PROJECT_DIR}/.claude-memory-changes.jsonl" \
       "${PROJECT_DIR}/.claude-memory-session-end.json" \
       "${SESSION_FILE}" 2>/dev/null || true
 
-# Output JSON to trigger memory save
+# Output JSON with informational context
 cat <<EOF
 {
-  "additionalContext": "👋 Session ${SESSION_ID} ending. ${SESSION_SUMMARY}. Details: ${SESSION_DETAILS}. IMPORTANT: Call mcp__memory-store__record NOW to save: memory='${SESSION_SUMMARY}. ${SESSION_DETAILS}.', background='${BACKGROUND_CONTEXT}', importance='normal'.",
+  "additionalContext": "👋 Session ${SESSION_ID} ending. ${SESSION_SUMMARY}. Details: ${SESSION_DETAILS}. Memory Store has captured this session automatically.",
   "userMessage": "✓ Session ending! ${FILES_TRACKED} files tracked, ${COMMITS_ANALYZED} commits analyzed over ${DURATION_HUMAN}",
   "continue": true
 }

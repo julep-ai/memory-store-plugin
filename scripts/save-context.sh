@@ -4,6 +4,16 @@
 
 set -euo pipefail
 
+# JSON escape function to prevent command injection
+json_escape() {
+    printf '%s' "$1" | \
+        sed 's/\\/\\\\/g' | \
+        sed 's/"/\\"/g' | \
+        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        sed 's/\t/\\t/g' | \
+        sed 's/\r/\\r/g'
+}
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 
 # Load session state from project-local file
@@ -78,22 +88,36 @@ CLAUDE.md updates: $(echo "${CLAUDE_MD_MODIFIED}" | grep -c . || echo "0")
 EOF
 )
 
-# Prepare memory record
-MEMORY_TEXT="Conversation context saved before compaction"
+# Record context snapshot in Memory Store (async, in background)
+(
+  # Escape all variables for safe JSON interpolation
+  SESSION_ID_ESCAPED=$(json_escape "${SESSION_ID}")
+  CONTEXT_SUMMARY_ESCAPED=$(json_escape "${CONTEXT_SUMMARY}")
 
-MEMORY_PAYLOAD=$(cat <<EOF
+  # Build memory payload with escaped context summary
+  MEMORY_JSON=$(cat <<RECORD_EOF
 {
-  "memory": "${MEMORY_TEXT}",
-  "background": "${CONTEXT_SUMMARY}. Session: ${SESSION_ID}. This snapshot captures the state before conversation history was compacted to preserve important context.",
-  "importance": "normal"
+  "memory": "Conversation context saved before compaction in ${SESSION_ID_ESCAPED}",
+  "background": "${CONTEXT_SUMMARY_ESCAPED}. Session: ${SESSION_ID_ESCAPED}. This snapshot captures the state before conversation history was compacted to preserve important context for debugging and continuity.",
+  "importance": "high"
 }
-EOF
+RECORD_EOF
 )
+
+  # Invoke MCP tool directly (async) - HIGH importance for debugging
+  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>/dev/null || true
+
+) &  # Background execution
 
 log "Context saved successfully"
 log "State: ${CURRENT_BRANCH} with ${UNCOMMITTED_CHANGES} uncommitted changes"
 
-# Optional: Create a backup of the current session state
-# This could be useful for debugging or audit trails
+# Output JSON to inform Claude
+cat <<EOF
+{
+  "additionalContext": "💾 Context snapshot saved before compaction. Branch: ${CURRENT_BRANCH}, Recent files: ${RECENT_FILE_COUNT}, Uncommitted: ${UNCOMMITTED_CHANGES}. This preserves important context for post-compaction continuity.",
+  "continue": true
+}
+EOF
 
 exit 0
