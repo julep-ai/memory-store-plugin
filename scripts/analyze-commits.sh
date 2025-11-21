@@ -4,6 +4,16 @@
 
 set -euo pipefail
 
+# JSON escape function to prevent command injection
+json_escape() {
+    printf '%s' "$1" | \
+        sed 's/\\/\\\\/g' | \
+        sed 's/"/\\"/g' | \
+        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        sed 's/\t/\\t/g' | \
+        sed 's/\r/\\r/g'
+}
+
 # Read and discard stdin (hook protocol requirement)
 if [ ! -t 0 ]; then
     cat > /dev/null
@@ -114,11 +124,15 @@ BACKGROUND_CONTEXT="Commit ${COMMIT_HASH} on branch ${COMMIT_BRANCH}. Type: ${CO
 
 # Record commit in Memory Store (async, in background)
 (
-  # Build memory payload
+  # Escape all variables for safe JSON interpolation
+  COMMIT_SUMMARY_ESCAPED=$(json_escape "${COMMIT_SUMMARY}")
+  BACKGROUND_CONTEXT_ESCAPED=$(json_escape "${BACKGROUND_CONTEXT}")
+
+  # Build memory payload with escaped variables
   MEMORY_JSON=$(cat <<RECORD_EOF
 {
-  "memory": "${COMMIT_SUMMARY}",
-  "background": "${BACKGROUND_CONTEXT}",
+  "memory": "${COMMIT_SUMMARY_ESCAPED}",
+  "background": "${BACKGROUND_CONTEXT_ESCAPED}",
   "importance": "${IMPORTANCE}"
 }
 RECORD_EOF

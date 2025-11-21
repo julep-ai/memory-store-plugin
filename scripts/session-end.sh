@@ -4,6 +4,16 @@
 
 set -euo pipefail
 
+# JSON escape function to prevent command injection
+json_escape() {
+    printf '%s' "$1" | \
+        sed 's/\\/\\\\/g' | \
+        sed 's/"/\\"/g' | \
+        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        sed 's/\t/\\t/g' | \
+        sed 's/\r/\\r/g'
+}
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 
 # Load session state from project-local file
@@ -53,11 +63,16 @@ BACKGROUND_CONTEXT="Session ${SESSION_ID} ended at ${END_TIME} in project ${PROJ
 
 # Record session end in Memory Store (async, in background)
 (
-  # Build memory payload
+  # Escape all variables for safe JSON interpolation
+  SESSION_SUMMARY_ESCAPED=$(json_escape "${SESSION_SUMMARY}")
+  SESSION_DETAILS_ESCAPED=$(json_escape "${SESSION_DETAILS}")
+  BACKGROUND_CONTEXT_ESCAPED=$(json_escape "${BACKGROUND_CONTEXT}")
+
+  # Build memory payload with escaped variables
   MEMORY_JSON=$(cat <<RECORD_EOF
 {
-  "memory": "${SESSION_SUMMARY}. ${SESSION_DETAILS}",
-  "background": "${BACKGROUND_CONTEXT}",
+  "memory": "${SESSION_SUMMARY_ESCAPED}. ${SESSION_DETAILS_ESCAPED}",
+  "background": "${BACKGROUND_CONTEXT_ESCAPED}",
   "importance": "normal"
 }
 RECORD_EOF

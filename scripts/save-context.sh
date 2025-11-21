@@ -4,6 +4,16 @@
 
 set -euo pipefail
 
+# JSON escape function to prevent command injection
+json_escape() {
+    printf '%s' "$1" | \
+        sed 's/\\/\\\\/g' | \
+        sed 's/"/\\"/g' | \
+        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        sed 's/\t/\\t/g' | \
+        sed 's/\r/\\r/g'
+}
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 
 # Load session state from project-local file
@@ -80,11 +90,15 @@ EOF
 
 # Record context snapshot in Memory Store (async, in background)
 (
-  # Build memory payload with context summary
+  # Escape all variables for safe JSON interpolation
+  SESSION_ID_ESCAPED=$(json_escape "${SESSION_ID}")
+  CONTEXT_SUMMARY_ESCAPED=$(json_escape "${CONTEXT_SUMMARY}")
+
+  # Build memory payload with escaped context summary
   MEMORY_JSON=$(cat <<RECORD_EOF
 {
-  "memory": "Conversation context saved before compaction in ${SESSION_ID}",
-  "background": "${CONTEXT_SUMMARY}. Session: ${SESSION_ID}. This snapshot captures the state before conversation history was compacted to preserve important context for debugging and continuity.",
+  "memory": "Conversation context saved before compaction in ${SESSION_ID_ESCAPED}",
+  "background": "${CONTEXT_SUMMARY_ESCAPED}. Session: ${SESSION_ID_ESCAPED}. This snapshot captures the state before conversation history was compacted to preserve important context for debugging and continuity.",
   "importance": "high"
 }
 RECORD_EOF
