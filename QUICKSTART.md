@@ -69,7 +69,24 @@ Most things happen automatically, but you can manually check:
 
 ## 🧪 Verify It's Working (30 seconds)
 
-### Test 1: Check Status
+### Test 1: Session Start Check
+
+When you start Claude Code, you should see:
+
+```
+✅ Memory Store MCP: Connected
+```
+
+If you see:
+```
+⚠️  Memory Store MCP: Not configured
+   📝 To enable memory storage, run:
+      claude mcp add memory-store -t http https://beta.memory.store/mcp
+```
+
+**Run that command** and restart Claude Code.
+
+### Test 2: Check Status
 ```bash
 /memory-status
 ```
@@ -79,7 +96,7 @@ You should see:
 - ✅ Files tracked count
 - ✅ Memory Store connection status
 
-### Test 2: Make a Change
+### Test 3: Make a Change
 ```bash
 # Edit any file
 # Then check:
@@ -88,14 +105,14 @@ You should see:
 
 You should see the "Files tracked" counter increase.
 
-### Test 3: Query Memory
+### Test 4: Query Memory
 ```bash
 /memory-recall "recent changes"
 ```
 
 You should see your recent work.
 
-**If all three work → You're fully set up! 🎉**
+**If all four tests pass → You're fully set up! 🎉**
 
 ---
 

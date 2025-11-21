@@ -196,11 +196,18 @@ When team members trust the repository, the plugin is automatically installed!
 cd your-project
 claude
 
+# You should see at session start:
+# ✅ Memory Store MCP: Connected
+# OR
+# ⚠️  Memory Store MCP: Not configured
+#    📝 To enable memory storage, run:
+#       claude mcp add memory-store -t http https://beta.memory.store/mcp
+
 # Check plugin loaded
 /plugin
 # Should show: ✔ memory-store · Installed
 
-# Check MCP connected
+# Check MCP connected (manual verification)
 /mcp
 # Should show: ✓ memory-store - Connected
 
@@ -209,7 +216,7 @@ claude
 # Should show: Session tracking information
 ```
 
-✅ If all three checks pass, automatic tracking is working!
+✅ If all checks pass and session start shows "✅ Memory Store MCP: Connected", automatic tracking is working!
 
 ## Usage
 
@@ -551,6 +558,20 @@ claude mcp call memory-store overview --mode basic
 
 ### Memory Store Connection Issues
 
+**Quick Check**: Every session start shows MCP status:
+- ✅ "Memory Store MCP: Connected" = Working!
+- ⚠️ "Memory Store MCP: Not configured" = Follow the command shown
+- ℹ️ "Memory Store MCP: Status unknown" = Claude CLI issue
+
+**If you see "Not configured":**
+```bash
+# Run the command shown in session start message:
+claude mcp add memory-store -t http https://beta.memory.store/mcp
+
+# OAuth will open in browser - authenticate once
+```
+
+**If you see "Connected" but storage not working:**
 ```bash
 # 1. Check MCP server status
 claude mcp list
@@ -559,7 +580,7 @@ claude mcp list
 claude mcp remove memory-store
 claude mcp add memory-store -t http https://beta.memory.store/mcp
 
-# 3. Check network connectivity
+# 3. Restart Claude Code session
 # 4. Verify OAuth authentication completed in browser
 ```
 

@@ -48,6 +48,19 @@ CLAUDE_MD_COUNT=$(find "${PROJECT_DIR}" -name "CLAUDE.md" -o -name "claude.md" 2
 # Count files in project (limit search for performance)
 FILE_COUNT=$(find "${PROJECT_DIR}" -type f -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | wc -l | tr -d ' ')
 
+# Check MCP connection status
+MCP_STATUS="unknown"
+MCP_SETUP_CMD=""
+if command -v claude &> /dev/null; then
+    # Check if memory-store MCP server is configured
+    if claude mcp list 2>/dev/null | grep -q "memory-store"; then
+        MCP_STATUS="configured"
+    else
+        MCP_STATUS="not-configured"
+        MCP_SETUP_CMD="claude mcp add memory-store -t http https://beta.memory.store/mcp"
+    fi
+fi
+
 # Escape all variables for safe JSON interpolation
 SESSION_ID_ESCAPED=$(json_escape "${SESSION_ID}")
 PROJECT_NAME_ESCAPED=$(json_escape "${PROJECT_NAME}")
@@ -56,6 +69,7 @@ PROJECT_DIR_ESCAPED=$(json_escape "${PROJECT_DIR}")
 START_TIME_ESCAPED=$(json_escape "${START_TIME}")
 RECENT_COMMITS_ESCAPED=$(json_escape "${RECENT_COMMITS}")
 GIT_COMMIT_ESCAPED=$(json_escape "${GIT_COMMIT}")
+MCP_STATUS_ESCAPED=$(json_escape "${MCP_STATUS}")
 
 # Build background context
 BACKGROUND_CONTEXT="Project directory: ${PROJECT_DIR_ESCAPED}. Start time: ${START_TIME_ESCAPED}. Files: ${FILE_COUNT}. CLAUDE.md files: ${CLAUDE_MD_COUNT}. Recent commits: ${RECENT_COMMITS_ESCAPED}. Current commit: ${GIT_COMMIT_ESCAPED}."
@@ -70,6 +84,20 @@ bash "${PROJECT_DIR}/scripts/queue-memory.sh" \
   --background "${BACKGROUND_CONTEXT}" \
   --importance "normal" 2>/dev/null || true
 
+# Build MCP status message
+if [[ "${MCP_STATUS}" == "configured" ]]; then
+    MCP_MESSAGE="✅ Memory Store MCP: Connected"
+elif [[ "${MCP_STATUS}" == "not-configured" ]]; then
+    MCP_MESSAGE="⚠️  Memory Store MCP: Not configured
+
+📝 To enable memory storage, run:
+   ${MCP_SETUP_CMD}
+
+   This enables automatic memory persistence across sessions."
+else
+    MCP_MESSAGE="ℹ️  Memory Store MCP: Status unknown (Claude CLI not available)"
+fi
+
 # Output JSON to inform Claude about the session
 cat <<EOF
 {
@@ -77,6 +105,8 @@ cat <<EOF
 
 📊 Project snapshot: ${FILE_COUNT} files, ${CLAUDE_MD_COUNT} CLAUDE.md files.
 📝 Recent commits: ${RECENT_COMMITS}
+
+${MCP_MESSAGE}
 
 💾 Memory queued for automatic processing.
 🔍 Check for queued memories and recent context using memory-queue-processor skill.",
