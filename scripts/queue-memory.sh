@@ -7,12 +7,13 @@ set -euo pipefail
 # Queue file location
 QUEUE_FILE="${CLAUDE_PROJECT_DIR:-.}/.memory-queue.jsonl"
 
-# JSON escape function
+# JSON escape function (macOS compatible)
 json_escape() {
+    # Simple escaping that works on both macOS and Linux
     printf '%s' "$1" | \
         sed 's/\\/\\\\/g' | \
         sed 's/"/\\"/g' | \
-        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        tr '\n' ' ' | \
         sed 's/\t/\\t/g' | \
         sed 's/\r/\\r/g'
 }

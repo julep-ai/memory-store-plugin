@@ -9,7 +9,7 @@ json_escape() {
     printf '%s' "$1" | \
         sed 's/\\/\\\\/g' | \
         sed 's/"/\\"/g' | \
-        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        tr '\n' ' ' | \
         sed 's/\t/\\t/g' | \
         sed 's/\r/\\r/g'
 }
