@@ -4,48 +4,36 @@
 
 A comprehensive Claude Code plugin that automatically tracks your development flow, captures session context, analyzes git commits, and maintains team knowledge across projects.
 
-## Quick Start (3 Minutes)
+## Quick Start (60 Seconds)
 
-**IMPORTANT**: Both the plugin AND the MCP server are required for automatic tracking to work:
-- **Plugin**: Provides automatic hooks that track your development activity
-- **MCP Server**: Stores the tracked data persistently
-
-### 1. Install the Plugin
+### Three Simple Steps:
 
 ```bash
-# Add the marketplace
+# 1. Add marketplace
 claude plugin marketplace add julep-ai/memory-store-plugin
 
-# Install the plugin
-claude plugin install memory-store@claude-plugin
+# 2. Install plugin
+claude plugin install memory-store
+
+# 3. Add Memory Store MCP server
+claude mcp add memory-store https://beta.memory.store/mcp
 ```
 
-✅ This enables automatic tracking hooks
+**That's it!** OAuth authentication will open in your browser. Authenticate once and you're done.
 
-### 2. Configure Memory Store MCP Server
-
-```bash
-# Add the Memory Store MCP server
-claude mcp add memory-store -t http https://beta.memory.store/mcp
-```
-
-✅ This enables persistent memory storage
-
-The OAuth authentication flow will open in your browser. Authenticate once and you're all set!
-
-### 3. Verify Automatic Tracking
+### Start Using:
 
 ```bash
 cd your-project
 claude
 ```
 
-Check that everything is working:
+Memory tracking works automatically. Check it's running:
 ```
-/memory-store:memory-status
+/memory-status
 ```
 
-You should see session tracking active!
+You should see active session tracking!
 
 ## What Gets Tracked Automatically
 
@@ -75,7 +63,13 @@ Once installed, the plugin **automatically tracks** (no manual commands needed):
 - ✅ **Before compression**: Saves important context automatically
 - ✅ **Preserves decisions**: Key reasoning and patterns retained
 
-## No Manual Work Required!
+## Zero Configuration - Just Ask Questions!
+
+The plugin automatically:
+- ✅ Tracks your work in the background
+- ✅ Searches memory when you ask questions
+- ✅ Loads context at session start
+- ✅ Preserves debugging state
 
 Just use Claude Code normally:
 ```bash

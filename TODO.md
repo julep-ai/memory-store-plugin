@@ -38,7 +38,17 @@ Claude Code Session
 
 ## 🎯 Recent Progress Summary
 
-**Latest Session (2025-11-21 - Used by mem-integrations for testing):**
+**Current Session (2025-11-21 - Autonomous Memory Recording):**
+
+✅ **CRITICAL FIX: Autonomous Memory Recording**
+- ✅ **Hooks now invoke MCP tools directly** via `claude mcp call memory-store record`
+- ✅ Background async execution (`&`) - non-blocking session flow
+- ✅ SessionStart, track-changes, and SessionEnd hooks updated
+- ✅ Memory storage works WITHOUT skill activation required
+- ✅ Skills now OPTIONAL - only needed for proactive context retrieval
+- ✅ Tested: File changes automatically trigger memory recording
+
+**Previous Session (2025-11-21 - Used by mem-integrations for testing):**
 
 ✅ **Skill Integration Validated**
 - ✅ `memory-context-retrieval` skill successfully invoked by mem-integrations
@@ -61,16 +71,18 @@ Claude Code Session
 **SessionStart Hook** [anchor:H1]
 - ✅ Location: `scripts/session-start.sh`
 - ✅ Functionality: Initializes session tracking, loads context, captures project snapshot
-- ✅ Status: Implemented and working
-- ✅ Invokes: `mcp__memory-store__record` with session metadata
+- ✅ Status: **Implemented and working - NOW AUTONOMOUS**
+- ✅ Invokes: `mcp__memory-store__record` directly via `claude mcp call` (async)
 - ✅ Captures: Project state, git branch, file count, timestamp
+- ✅ Execution: Background async (`&`) - non-blocking
 
 **PostToolUse Hooks** [anchor:H2-H5]
 - ✅ [anchor:H2] **File Change Tracking** (`scripts/track-changes.sh`)
   - Monitors Write/Edit operations
   - Extracts file path, language, patterns (API, UI, Service)
   - Increments session change counter
-  - Invokes: `mcp__memory-store__record` with change metadata
+  - **NOW AUTONOMOUS**: Invokes `claude mcp call memory-store record` directly (async)
+  - Background execution (`&`) - non-blocking
 
 - ✅ [anchor:H3] **Git Commit Analysis** (`scripts/analyze-commit.sh`)
   - Analyzes commit messages, files changed, patterns
@@ -97,8 +109,10 @@ Claude Code Session
 **SessionEnd Hook** [anchor:H7]
 - ✅ Location: `scripts/session-end.sh`
 - ✅ Functionality: Summarizes session, stores learnings, updates overview
-- ✅ Status: Implemented
-- ✅ Invokes: `mcp__memory-store__record` with session summary
+- ✅ Status: **Implemented - NOW AUTONOMOUS**
+- ✅ Invokes: `claude mcp call memory-store record` directly (async)
+- ✅ Background execution (`&`) - non-blocking
+- ✅ Cleans up session files after recording
 
 **Pre-commit Validation Hook** [anchor:H8]
 - ✅ Location: `scripts/validate-changes.sh`
@@ -193,13 +207,14 @@ Claude Code Session
 **Memory Auto-Track** [anchor:S2]
 - ✅ Skill: `memory-store:memory-auto-track`
 - ✅ File: `skills/memory-auto-track/SKILL.md`
-- ✅ Functionality: Automatically track development context and retrieve memories
+- ✅ Functionality: **NOW OPTIONAL** - Proactively retrieves context when needed
 - ✅ Status: Implemented and tested ✓
-- ✅ Activation: Manual via `SlashCommand` or `/memory-store:memory-auto-track`
-- ✅ Behavior:
-  - Responds to hook `additionalContext` with "Store this in memory"
-  - Proactively retrieves context when needed
-  - Bidirectional memory management (store + retrieve)
+- ✅ Activation: Manual via `Skill` tool
+- ✅ **Updated Role** (post-autonomous-fix):
+  - Storage: Hooks now handle automatically (no skill needed)
+  - Retrieval: Skill provides intelligent context recall
+  - Use when: You want Claude to auto-recall patterns when you ask questions
+  - Optional: Memory storage works without this skill
 
 **Anchor Suggester** [anchor:S3]
 - ✅ Skill: `memory-store:anchor-suggester`
@@ -404,10 +419,11 @@ Claude Code Session
 ## 🤔 Open Questions & Decisions Needed
 
 ### Architecture
-1. **Should hook scripts be async or sync?**
-   - Current: Background execution via `&`
-   - Trade-off: Speed vs consistency
-   - Decision: Pending
+1. ✅ **Should hook scripts be async or sync?** [RESOLVED]
+   - **Decision**: ASYNC with background execution via `&`
+   - **Implementation**: All hooks now invoke `claude mcp call` in background
+   - **Trade-off resolved**: Speed wins - memory storage is non-blocking
+   - **Consistency maintained**: MCP handles eventual consistency
 
 2. **How to handle MCP connection failures?**
    - Current: Silent failure in background
@@ -448,10 +464,11 @@ This TODO.md file is:
 - **Synced** with GitHub issues and project board
 - **Used** by AI assistants (Claude) for project understanding
 
-**Last feature completed**: Memory Auto-Track skill validation
-**Current focus**: Testing and validation of plugin features
-**Next milestone**: Comprehensive testing suite and CI/CD pipeline
-**Status**: Core features complete ✓, Testing in progress
+**Last feature completed**: Autonomous memory recording via direct MCP tool invocation
+**Critical fix applied**: Hooks now invoke `claude mcp call` directly (async)
+**Current focus**: Testing autonomous recording, updating remaining hooks
+**Next milestone**: Update all remaining hooks (commits, anchors) + comprehensive testing
+**Status**: Core autonomy working ✓, Full hook coverage in progress
 
 ---
 

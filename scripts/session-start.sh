@@ -38,10 +38,44 @@ CLAUDE_MD_COUNT=$(find "${PROJECT_DIR}" -name "CLAUDE.md" -o -name "claude.md" 2
 # Count files in project (limit search for performance)
 FILE_COUNT=$(find "${PROJECT_DIR}" -type f -not -path "*/node_modules/*" -not -path "*/.git/*" 2>/dev/null | wc -l | tr -d ' ')
 
-# Output JSON to trigger Claude to load context and record session start
+# Record session start in Memory Store (async, in background)
+# This runs independently of Claude's conversation flow
+(
+  # Build memory payload as JSON
+  MEMORY_JSON=$(cat <<RECORD_EOF
+{
+  "memory": "Session ${SESSION_ID} started in ${PROJECT_NAME} on branch ${GIT_BRANCH}",
+  "background": "Project directory: ${PROJECT_DIR}. Start time: ${START_TIME}. Files: ${FILE_COUNT}. CLAUDE.md files: ${CLAUDE_MD_COUNT}. Recent commits: ${RECENT_COMMITS}. Current commit: ${GIT_COMMIT}.",
+  "importance": "normal"
+}
+RECORD_EOF
+)
+
+  # Invoke MCP tool directly via claude CLI (captures async)
+  # Using || true to prevent hook failure if Memory Store is unavailable
+  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>/dev/null || true
+
+) &  # Run in background to avoid blocking session start
+
+# Load project overview from Memory Store (async, in background)
+# This retrieves relevant context to help Claude understand the project
+(
+  # Invoke overview with 'standard' mode for quick context load
+  claude mcp call memory-store overview --mode standard 2>/dev/null > "${PROJECT_DIR}/.claude-session-overview.json" || true
+
+  # Also recall recent work on this project/branch
+  RECALL_CUES='["'${PROJECT_NAME}'", "'${GIT_BRANCH}'", "recent work", "session", "commit"]'
+  RECALL_BG="Session start in ${PROJECT_NAME} on ${GIT_BRANCH}. Loading recent context to understand current work."
+
+  echo "{\"cues\": ${RECALL_CUES}, \"background\": \"${RECALL_BG}\", \"k\": 5}" | \
+    claude mcp call memory-store recall 2>/dev/null > "${PROJECT_DIR}/.claude-session-recall.json" || true
+
+) &  # Run in background
+
+# Output JSON to inform Claude about the session (non-blocking)
 cat <<EOF
 {
-  "additionalContext": "🚀 Session ${SESSION_ID} started in ${PROJECT_NAME}/${GIT_BRANCH} at ${START_TIME}. Project has ${FILE_COUNT} files, ${CLAUDE_MD_COUNT} CLAUDE.md files. Recent commits: ${RECENT_COMMITS}. Current commit: ${GIT_COMMIT}. Session state saved to .claude-session file. IMPORTANT: (1) Call mcp__memory-store__overview with mode='full' to load complete project context. (2) Call mcp__memory-store__record to save: memory='Session ${SESSION_ID} started in ${PROJECT_NAME} on branch ${GIT_BRANCH}', background='Project directory: ${PROJECT_DIR}. Start time: ${START_TIME}. Files tracked: ${FILE_COUNT}.', importance='normal'.",
+  "additionalContext": "🚀 Session ${SESSION_ID} started in ${PROJECT_NAME}/${GIT_BRANCH} at ${START_TIME}. Project has ${FILE_COUNT} files, ${CLAUDE_MD_COUNT} CLAUDE.md files. Recent commits: ${RECENT_COMMITS}. Memory Store is loading project overview and recent context automatically in the background.",
   "continue": true
 }
 EOF

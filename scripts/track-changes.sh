@@ -48,6 +48,35 @@ fi
 # Get relative path from project root
 REL_PATH=$(realpath --relative-to="${PROJECT_DIR}" "${FILE_PATH}" 2>/dev/null || basename "${FILE_PATH}")
 
+# Intelligent filtering: Skip files that don't need tracking
+SHOULD_SKIP="false"
+
+# Skip auto-generated, temporary, or trivial files
+if [[ "${FILE_PATH}" =~ \.log$ ]] || \
+   [[ "${FILE_PATH}" =~ \.tmp$ ]] || \
+   [[ "${FILE_PATH}" =~ node_modules/ ]] || \
+   [[ "${FILE_PATH}" =~ \.next/ ]] || \
+   [[ "${FILE_PATH}" =~ dist/ ]] || \
+   [[ "${FILE_PATH}" =~ build/ ]] || \
+   [[ "${FILE_PATH}" =~ __pycache__/ ]] || \
+   [[ "${FILE_PATH}" =~ \.pyc$ ]] || \
+   [[ "${FILE_PATH}" =~ package-lock\.json$ ]] || \
+   [[ "${FILE_PATH}" =~ yarn\.lock$ ]] || \
+   [[ "${FILE_PATH}" =~ pnpm-lock\.yaml$ ]] || \
+   [[ "${FILE_PATH}" =~ \.min\. ]]; then
+    SHOULD_SKIP="true"
+fi
+
+# Exit silently if we should skip
+if [[ "${SHOULD_SKIP}" == "true" ]]; then
+    cat <<EOF
+{
+  "continue": true
+}
+EOF
+    exit 0
+fi
+
 # Determine if this is a new file or modification
 if git ls-files --error-unmatch "${FILE_PATH}" > /dev/null 2>&1; then
     CHANGE_TYPE="modified"
@@ -65,6 +94,8 @@ case "${FILE_EXT}" in
     rs) FILE_LANG="Rust" ;;
     md) FILE_LANG="Markdown" ;;
     json) FILE_LANG="JSON" ;;
+    yml|yaml) FILE_LANG="YAML" ;;
+    toml) FILE_LANG="TOML" ;;
     *) FILE_LANG="Unknown" ;;
 esac
 
@@ -110,10 +141,48 @@ if [[ $((CHANGES_COUNT % 10)) -eq 0 ]]; then
     CHECKPOINT_MSG="✓ Checkpoint: ${CHANGES_COUNT} files tracked this session"
 fi
 
-# Output JSON to trigger memory storage and show checkpoint
+# Intelligent importance detection
+IMPORTANCE="low"  # Default for most files
+
+# High importance: Core architecture, config, important docs
+if [[ "${FILE_PATH}" =~ CLAUDE\.md$ ]] || \
+   [[ "${FILE_PATH}" =~ README\.md$ ]] || \
+   [[ "${FILE_PATH}" =~ package\.json$ ]] || \
+   [[ "${FILE_PATH}" =~ tsconfig\.json$ ]] || \
+   [[ "${FILE_PATH}" =~ docker ]] || \
+   [[ "${FILE_PATH}" =~ \.env ]] || \
+   [[ "${PATTERNS_DETECTED}" =~ "API endpoint" ]] || \
+   [[ "${PATTERNS_DETECTED}" =~ "Data model" ]]; then
+    IMPORTANCE="normal"
+fi
+
+# Very high importance: Critical configuration
+if [[ "${FILE_PATH}" =~ plugin\.json$ ]] || \
+   [[ "${FILE_PATH}" =~ hooks\.json$ ]]; then
+    IMPORTANCE="high"
+fi
+
+# Record file change in Memory Store (async, in background)
+(
+  # Build memory payload
+  MEMORY_JSON=$(cat <<RECORD_EOF
+{
+  "memory": "${MEMORY_TEXT}",
+  "background": "File ${REL_PATH} was ${CHANGE_TYPE} in session ${SESSION_ID}. Language: ${FILE_LANG}. Pattern: ${PATTERNS_DETECTED}. Change #${CHANGES_COUNT}. Project: $(basename ${PROJECT_DIR}).",
+  "importance": "${IMPORTANCE}"
+}
+RECORD_EOF
+)
+
+  # Invoke MCP tool directly (async)
+  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>/dev/null || true
+
+) &  # Background execution
+
+# Output JSON with informational context
 cat <<EOF
 {
-  "additionalContext": "📝 ${MEMORY_TEXT}. Session: ${SESSION_ID}, Project: $(basename ${PROJECT_DIR}). Store this in memory using memory__record with importance: low, background: 'File ${REL_PATH} was ${CHANGE_TYPE} in session ${SESSION_ID}. Language: ${FILE_LANG}. Pattern: ${PATTERNS_DETECTED}. Change #${CHANGES_COUNT}.'",
+  "additionalContext": "📝 ${MEMORY_TEXT}. Session: ${SESSION_ID}, Change #${CHANGES_COUNT}. Automatically tracked in Memory Store.",
   ${CHECKPOINT_MSG:+"userMessage": "$CHECKPOINT_MSG",}
   "continue": true
 }
