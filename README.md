@@ -83,12 +83,14 @@ Claude: [Creates auth.ts]
 **Behind the scenes:**
 1. ✅ Hook fires (PreToolUse on Write)
 2. ✅ track-changes.sh extracts file info
-3. ✅ Claude calls mcp__memory-store__record
-4. ✅ Data stored: "Created src/api/auth.ts - API authentication pattern"
-5. ✅ Session counter incremented
+3. ✅ Item written to `.memory-queue.jsonl`
+4. ✅ memory-queue-processor skill reads queue
+5. ✅ Claude calls `mcp__memory-store__record`
+6. ✅ Data stored: "Created src/api/auth.ts - API authentication pattern"
+7. ✅ User sees: "💾 Saved to Memory Store: File created..."
 
-**You see:** Normal Claude Code workflow
-**Plugin does:** All tracking automatically!
+**You see:** Normal Claude Code workflow + brief confirmation
+**Plugin does:** All tracking automatically via queue!
 
 ## Features
 
@@ -300,49 +302,71 @@ When you reference anchor comments in code or documentation, the plugin maintain
 
 ## How It Works
 
-### Architecture
+### Architecture (v1.2.3+: Queue-Based)
 
 ```
 Claude Code Session
        ↓
-   Plugin Hooks
+   Plugin Hooks (SessionStart, PreToolUse, SessionEnd, etc.)
        ↓
-┌──────────────────┐
-│  Hook Scripts    │
-│  (Background)    │
-└──────────────────┘
+┌──────────────────────────────────────┐
+│  Hook Scripts write to:              │
+│  .memory-queue.jsonl                 │
+│  (Producer Pattern)                  │
+└──────────────────────────────────────┘
        ↓
-┌──────────────────┐
-│  Memory MCP      │
-│  Server          │
-└──────────────────┘
+┌──────────────────────────────────────┐
+│  memory-queue-processor Skill        │
+│  (Consumer Pattern - Automatic)      │
+│  • Reads queue every message         │
+│  • Processes all items               │
+│  • Invokes MCP tools                 │
+│  • Reports to user                   │
+│  • Clears queue                      │
+└──────────────────────────────────────┘
        ↓
-┌──────────────────┐
-│  Memory Store    │
-│  (Cloud/Local)   │
-└──────────────────┘
+┌──────────────────────────────────────┐
+│  Memory MCP Server                   │
+│  (mcp__memory-store__record)         │
+└──────────────────────────────────────┘
+       ↓
+┌──────────────────────────────────────┐
+│  Memory Store (Cloud/Local)          │
+│  (beta.memory.store)                 │
+└──────────────────────────────────────┘
 ```
+
+**Why Queue-Based?**
+- Hook `additionalContext` is not visible to Claude in conversation
+- File-based communication bypasses this limitation
+- Reliable, testable, works on all platforms (macOS, Linux)
+- Producer-consumer pattern is proven distributed systems architecture
 
 ### Hook Execution Flow
 
-1. **SessionStart Hook**
+1. **SessionStart Hook** (scripts/session-start.sh)
    - Initializes session tracking
-   - Loads relevant context
+   - Writes session start to `.memory-queue.jsonl`
+   - Generates session ID and metadata
    - Captures project snapshot
 
-2. **PostToolUse Hooks**
-   - Track file changes (Write/Edit)
-   - Analyze commits (git commands)
-   - Sync CLAUDE.md files
+2. **PreToolUse Hooks** (scripts/track-changes.sh)
+   - Fires **before** Write/Edit operations
+   - Writes file changes to `.memory-queue.jsonl`
+   - Detects patterns (API, Service, UI, etc.)
+   - Smart filtering (skips node_modules, build/, etc.)
 
-3. **PreCompact Hook**
-   - Saves important context before compression
-   - Preserves decisions and reasoning
+3. **SessionEnd Hook** (scripts/session-end.sh)
+   - Writes session summary to `.memory-queue.jsonl`
+   - Calculates duration, quality metrics
+   - Cleans up temporary tracking files
 
-4. **SessionEnd Hook**
-   - Summarizes session
-   - Stores key learnings
-   - Updates project overview
+4. **memory-queue-processor Skill** (Automatic)
+   - Activates on **every user message**
+   - Reads `.memory-queue.jsonl`
+   - Invokes `mcp__memory-store__record` for each item
+   - Reports to user: "💾 Saved to Memory Store: ..."
+   - Clears processed items from queue
 
 ### Memory Storage
 

@@ -1,7 +1,7 @@
 # Memory Store Plugin - Quick Start Guide
 ## Get Started in 60 Seconds
 
-**Version**: 1.2.0
+**Version**: 1.2.3
 **Goal**: Start using memory-powered development immediately
 
 ---
@@ -40,8 +40,9 @@ Memory tracking works automatically. Claude will proactively retrieve relevant c
 - ✅ **Debugging context preserved** - Never lose context after compaction
 - ✅ **Intelligent retrieval** - Claude proactively recalls relevant patterns
 - ✅ **AI decides importance** - High-value changes prioritized automatically
+- ✅ **Transparent operation** - Brief confirmations: "💾 Saved to Memory Store..."
 
-**Just code normally. Memory works in the background.**
+**Just code normally. Memory works in the background via queue-based processing.**
 
 ---
 
