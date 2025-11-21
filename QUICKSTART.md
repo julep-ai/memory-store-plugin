@@ -16,7 +16,7 @@ claude plugin marketplace add julep-ai/memory-store-plugin
 claude plugin install memory-store
 
 # Step 3: Add Memory Store MCP server
-claude mcp add memory-store https://beta.memory.store/mcp
+claude mcp add memory-store -t http https://beta.memory.store/mcp
 ```
 
 **That's it!** Open any project and start coding:

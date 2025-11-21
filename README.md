@@ -16,7 +16,7 @@ claude plugin marketplace add julep-ai/memory-store-plugin
 claude plugin install memory-store
 
 # 3. Add Memory Store MCP server
-claude mcp add memory-store https://beta.memory.store/mcp
+claude mcp add memory-store -t http https://beta.memory.store/mcp
 ```
 
 **That's it!** OAuth authentication will open in your browser. Authenticate once and you're done.
@@ -494,7 +494,7 @@ claude mcp list
 
 # 2. Re-authenticate if needed
 claude mcp remove memory-store
-claude mcp add --transport http memory-store "https://beta.memory.store/mcp"
+claude mcp add memory-store -t http https://beta.memory.store/mcp
 
 # 3. Check network connectivity
 # 4. Verify OAuth authentication completed in browser

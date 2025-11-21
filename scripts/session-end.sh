@@ -79,7 +79,9 @@ RECORD_EOF
 )
 
   # Invoke MCP tool directly (async)
-  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>/dev/null || true
+  # Show auth/network errors, suppress normal operation noise
+  echo "${MEMORY_JSON}" | claude mcp call memory-store record 2>&1 | \
+    grep -iE "(auth|unauthorized|forbidden|connection|network|timeout)" >&2 || true
 
 ) &  # Background execution
 
