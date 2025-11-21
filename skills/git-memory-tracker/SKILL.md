@@ -1,5 +1,5 @@
 ---
-description: Analyze git commits and track development patterns in Memory Store
+description: Track git commits and analyze development patterns. Use when user says "track this commit", "analyze commits", "what did I work on", or after git commit commands to store commit history in Memory Store.
 proactive: true
 ---
 

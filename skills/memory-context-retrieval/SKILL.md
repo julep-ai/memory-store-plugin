@@ -1,10 +1,6 @@
 ---
-description: Automatically retrieve relevant development context from memory store
-capabilities: 
-  - context-retrieval
-  - pattern-matching
-  - team-knowledge
-  - decision-history
+description: Retrieve development context and patterns from memory. Use when user asks "how did we build", "what's the pattern for", "who worked on", "show me previous", or when implementing similar features.
+proactive: true
 ---
 
 # Memory Context Retrieval Skill

@@ -1,5 +1,5 @@
 ---
-description: Automatically track development context and retrieve relevant memories when needed
+description: Automatically search memory and retrieve context when user asks questions about the project, past work, patterns, decisions, or implementations. Always invoke before answering "how did we", "what patterns", "who worked on".
 proactive: true
 ---
 
