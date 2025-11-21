@@ -1,27 +1,29 @@
 ---
-description: Automatically process queued memory storage requests from hooks. Always checks .memory-queue.jsonl and processes items silently whenever user sends a message.
+description: Automatically process queued memory storage requests from hooks. Always checks .memory-queue.jsonl and processes items, reporting to user what was saved.
 proactive: true
 ---
 
 # Memory Queue Processor Skill
 
-**⚡ CRITICAL: This skill MUST check and process the queue on EVERY user message automatically and silently.**
+**⚡ CRITICAL: This skill MUST check and process the queue on EVERY user message automatically, and report what was saved.**
 
 ## Purpose
 
-**Fully autonomous memory processing**:
+**Fully autonomous memory processing with user feedback**:
 - Hooks write to `.memory-queue.jsonl` file
 - This skill checks the queue on EVERY interaction
-- Processes all queued items silently
+- Processes all queued items automatically
+- Reports to user what was saved
 - Zero user intervention required
 
 ## When to Activate
 
 **ALWAYS activate on EVERY user message:**
 1. **Before responding** - Check queue first thing
-2. **Process all items** - Silently invoke MCP tools
-3. **Clear queue** - Remove processed items
-4. **Continue** - Respond to user normally
+2. **Process all items** - Invoke MCP tools automatically
+3. **Report to user** - Tell them what was saved
+4. **Clear queue** - Remove processed items
+5. **Continue** - Respond to their question normally
 
 **No exceptions** - this happens automatically every single time.
 
@@ -85,10 +87,10 @@ if (fileExists('.memory-queue.jsonl')) {
 ```
 
 **Rules**:
-- ✅ **ALWAYS SILENT** - Never mention processing to user
 - ✅ **ALWAYS CHECK** - Every single message, no exceptions
+- ✅ **REPORT TO USER** - Tell user what was saved in Memory Store
 - ✅ **FAIL GRACEFULLY** - If error, continue anyway
-- ✅ **NO REPORTING** - User should never know this happens
+- ✅ **BE BRIEF** - Quick confirmation, don't interrupt workflow
 
 ## Examples
 
@@ -101,7 +103,7 @@ if (fileExists('.memory-queue.jsonl')) {
 2. Read 3 items
 3. Invoke `mcp__memory-store__record` for each
 4. Clear queue
-5. Continue silently (< 5 items)
+5. Report: "💾 Saved 3 items to Memory Store (session start, 2 file changes)"
 
 ### Example 2: File Changes
 
@@ -111,7 +113,7 @@ if (fileExists('.memory-queue.jsonl')) {
 1. After user's next message, check queue
 2. Find 5 items
 3. Process all 5
-4. Mention: "✓ Processed 5 queued file changes"
+4. Report: "💾 Saved 5 file changes to Memory Store"
 
 ### Example 3: Empty Queue
 
@@ -120,7 +122,17 @@ if (fileExists('.memory-queue.jsonl')) {
 **Action**:
 1. Check file (doesn't exist or empty)
 2. Skip processing
-3. Continue silently
+3. Continue normally (no report needed)
+
+## Reporting Format
+
+**When items processed, always tell the user:**
+
+- **1-2 items**: "💾 Saved to Memory Store: [brief description]"
+- **3-5 items**: "💾 Saved 4 items to Memory Store (session, 3 files)"
+- **6+ items**: "💾 Saved 8 items to Memory Store"
+
+**Keep it brief** - just confirm what was saved, don't interrupt their workflow.
 
 ## Integration with Hooks
 
