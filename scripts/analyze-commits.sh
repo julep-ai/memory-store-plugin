@@ -14,8 +14,13 @@ json_escape() {
         sed 's/\r/\\r/g'
 }
 
-# Read and discard stdin (hook protocol requirement)
+# This script can be called in two ways:
+# 1. As a hook (via stdin with JSON) - Currently not supported due to PostToolUse limitations
+# 2. Manually after commits - Just analyze the most recent commit
+
+# Read JSON input if available (hook protocol)
 if [ ! -t 0 ]; then
+    # Discard stdin for now - PostToolUse hooks not fully supported yet
     cat > /dev/null
 fi
 
@@ -91,8 +96,13 @@ if [[ "${COMMIT_BRANCH}" =~ /([A-Z]+-[0-9]+) ]]; then
     TICKET_NUMBER="${BASH_REMATCH[1]}"
 fi
 
-# Increment commit counter in session file
+# Load session state from project-local file
 SESSION_FILE="${PROJECT_DIR}/.claude-session"
+if [[ -f "${SESSION_FILE}" ]]; then
+    source "${SESSION_FILE}"
+fi
+
+# Increment commit counter in session file
 COMMITS_COUNT=$((${MEMORY_COMMITS_COUNT:-0} + 1))
 
 if [[ -f "${SESSION_FILE}" ]]; then
