@@ -1,6 +1,13 @@
 #!/bin/bash
-# Analyze Commits Hook - Track git commit patterns and context
-# This script runs after git commit commands
+# Analyze Commits Script - Track git commit patterns and context
+#
+# USAGE: This script is called MANUALLY via the git-memory-tracker skill
+#        NOT automatically via hooks (PostToolUse hooks not supported)
+#
+# User triggers: "Track this commit", "Analyze my last 5 commits", etc.
+# Claude invokes: bash scripts/analyze-commits.sh
+#
+# See: skills/git-memory-tracker/SKILL.md for full documentation
 
 set -euo pipefail
 
@@ -20,13 +27,11 @@ json_escape() {
     '
 }
 
-# This script can be called in two ways:
-# 1. As a hook (via stdin with JSON) - Currently not supported due to PostToolUse limitations
-# 2. Manually after commits - Just analyze the most recent commit
+# This script is invoked manually via the git-memory-tracker skill
+# (Automatic PostToolUse hooks are not supported in current Claude Code version)
 
-# Read JSON input if available (hook protocol)
+# Discard any stdin (hook protocol compatibility)
 if [ ! -t 0 ]; then
-    # Discard stdin for now - PostToolUse hooks not fully supported yet
     cat > /dev/null
 fi
 

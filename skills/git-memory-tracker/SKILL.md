@@ -1,9 +1,11 @@
 ---
 description: Analyze git commits and track development patterns in Memory Store
-proactive: false
+proactive: true
 ---
 
 # Git Memory Tracker Skill
+
+**⚡ PROACTIVE: Suggest tracking commits when you notice git activity or user mentions commits.**
 
 **Purpose**: Manually analyze git history and store commit patterns in Memory Store when hooks don't capture them automatically.
 
