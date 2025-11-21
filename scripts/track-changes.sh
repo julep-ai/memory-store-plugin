@@ -4,6 +4,17 @@
 
 set -euo pipefail
 
+# JSON escape function to prevent command injection
+json_escape() {
+    # Escape backslashes, quotes, newlines, tabs, and control characters
+    printf '%s' "$1" | \
+        sed 's/\\/\\\\/g' | \
+        sed 's/"/\\"/g' | \
+        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        sed 's/\t/\\t/g' | \
+        sed 's/\r/\\r/g'
+}
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 
 # Load session state from project-local file
@@ -164,11 +175,21 @@ fi
 
 # Record file change in Memory Store (async, in background)
 (
-  # Build memory payload
+  # Escape all variables for safe JSON interpolation
+  MEMORY_ESCAPED=$(json_escape "${MEMORY_TEXT}")
+  REL_PATH_ESCAPED=$(json_escape "${REL_PATH}")
+  CHANGE_TYPE_ESCAPED=$(json_escape "${CHANGE_TYPE}")
+  SESSION_ID_ESCAPED=$(json_escape "${SESSION_ID}")
+  FILE_LANG_ESCAPED=$(json_escape "${FILE_LANG}")
+  PATTERNS_ESCAPED=$(json_escape "${PATTERNS_DETECTED}")
+  PROJECT_NAME=$(basename "${PROJECT_DIR}")
+  PROJECT_ESCAPED=$(json_escape "${PROJECT_NAME}")
+
+  # Build memory payload with escaped variables
   MEMORY_JSON=$(cat <<RECORD_EOF
 {
-  "memory": "${MEMORY_TEXT}",
-  "background": "File ${REL_PATH} was ${CHANGE_TYPE} in session ${SESSION_ID}. Language: ${FILE_LANG}. Pattern: ${PATTERNS_DETECTED}. Change #${CHANGES_COUNT}. Project: $(basename ${PROJECT_DIR}).",
+  "memory": "${MEMORY_ESCAPED}",
+  "background": "File ${REL_PATH_ESCAPED} was ${CHANGE_TYPE_ESCAPED} in session ${SESSION_ID_ESCAPED}. Language: ${FILE_LANG_ESCAPED}. Pattern: ${PATTERNS_ESCAPED}. Change #${CHANGES_COUNT}. Project: ${PROJECT_ESCAPED}.",
   "importance": "${IMPORTANCE}"
 }
 RECORD_EOF

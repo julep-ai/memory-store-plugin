@@ -115,21 +115,10 @@ Claude: [Creates auth.ts]
 
 ### 🔧 Custom Slash Commands
 - `/memory-status` - View current tracking status and statistics
-- `/memory-sync` - Manually synchronize project state to memory
-- `/memory-context [query]` - Retrieve relevant context for current work
 - `/memory-overview` - Generate comprehensive project overview
-- `/checkpoint` - Trigger progress validation checkpoint
-- `/correct "explanation"` - Correct Claude's mistakes with high-priority learning
-- `/session-feedback` - View current session quality rating
-- `/validate-changes` - Pre-commit validation with security checks
+- `/memory-recall [query]` - Retrieve relevant context (usually automatic)
 
-### 🎯 Interactive Validation & Feedback
-- **Progress Checkpoints**: Auto-validates after every 10 file changes
-- **Pre-commit Validation**: Reviews changes before commits with security checks
-- **Correction System**: Record mistakes with `/correct` for high-priority learning
-- **Session Quality Tracking**: Automatic feedback based on corrections needed
-- **Security Scanning**: Detects potential secrets, tokens, and debug code
-- **Semantic Commit Reminders**: Encourages proper commit message conventions
+**Note**: You rarely need `/memory-recall` - Claude automatically searches memory when you ask questions!
 
 ## Installation
 
@@ -235,12 +224,8 @@ You don't need to do anything - it just works!
 | Command | What It Does |
 |---------|--------------|
 | `/memory-status` | Show tracking status |
-| `/memory-sync` | Manually sync to memory |
-| `/memory-context [query]` | Get relevant context |
 | `/memory-overview` | Generate project overview |
-| `/checkpoint` | Trigger validation checkpoint |
-| `/correct "msg"` | Record correction (high priority) |
-| `/session-feedback` | View session quality |
+| `/memory-recall [query]` | Get relevant context (usually automatic) |
 
 ### Example Workflow
 
@@ -262,12 +247,6 @@ Plugin tracks all your changes automatically
 git commit -m "feat: add OAuth2 authentication"
 ```
 Plugin analyzes and stores commit context
-
-**Correct Mistakes**
-```
-/correct "We use OAuth2, not JWT. Decided Nov 6 for better token security."
-```
-Claude will remember this correction forever
 
 **End Session**
 ```
@@ -405,9 +384,8 @@ If your team works on multiple related projects:
 
 - **Use conventional commit messages**: `feat:`, `fix:`, `docs:`, etc.
 - **Keep CLAUDE.md files updated**: Document patterns as you establish them
-- **Run `/memory-sync` after major features**: Capture important milestones
-- **Use `/memory-context` when starting new work**: Check for similar implementations
-- **Correct Claude with `/correct`**: High-priority learning that persists forever
+- **Trust the automatic tracking**: The plugin captures everything in the background
+- **Use `/memory-overview` periodically**: Get a comprehensive project snapshot
 
 ### ❌ Avoid This
 

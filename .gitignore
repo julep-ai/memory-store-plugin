@@ -16,6 +16,9 @@
 BLOG_POST.md
 BLOG_POST_PERSONAL.md
 
+# Development tracking (local only)
+TODO.md
+
 # OS files
 .DS_Store
 Thumbs.db

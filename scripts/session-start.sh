@@ -4,6 +4,16 @@
 
 set -euo pipefail
 
+# JSON escape function to prevent command injection
+json_escape() {
+    printf '%s' "$1" | \
+        sed 's/\\/\\\\/g' | \
+        sed 's/"/\\"/g' | \
+        sed ':a;N;$!ba;s/\n/\\n/g' | \
+        sed 's/\t/\\t/g' | \
+        sed 's/\r/\\r/g'
+}
+
 # Get project directory (working directory when Claude Code starts)
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-${PWD}}"
 SESSION_ID="mem-$(date +%Y%m%d)-$(uuidgen | cut -d'-' -f1)"
@@ -41,11 +51,20 @@ FILE_COUNT=$(find "${PROJECT_DIR}" -type f -not -path "*/node_modules/*" -not -p
 # Record session start in Memory Store (async, in background)
 # This runs independently of Claude's conversation flow
 (
-  # Build memory payload as JSON
+  # Escape all variables for safe JSON interpolation
+  SESSION_ID_ESCAPED=$(json_escape "${SESSION_ID}")
+  PROJECT_NAME_ESCAPED=$(json_escape "${PROJECT_NAME}")
+  GIT_BRANCH_ESCAPED=$(json_escape "${GIT_BRANCH}")
+  PROJECT_DIR_ESCAPED=$(json_escape "${PROJECT_DIR}")
+  START_TIME_ESCAPED=$(json_escape "${START_TIME}")
+  RECENT_COMMITS_ESCAPED=$(json_escape "${RECENT_COMMITS}")
+  GIT_COMMIT_ESCAPED=$(json_escape "${GIT_COMMIT}")
+
+  # Build memory payload as JSON with escaped variables
   MEMORY_JSON=$(cat <<RECORD_EOF
 {
-  "memory": "Session ${SESSION_ID} started in ${PROJECT_NAME} on branch ${GIT_BRANCH}",
-  "background": "Project directory: ${PROJECT_DIR}. Start time: ${START_TIME}. Files: ${FILE_COUNT}. CLAUDE.md files: ${CLAUDE_MD_COUNT}. Recent commits: ${RECENT_COMMITS}. Current commit: ${GIT_COMMIT}.",
+  "memory": "Session ${SESSION_ID_ESCAPED} started in ${PROJECT_NAME_ESCAPED} on branch ${GIT_BRANCH_ESCAPED}",
+  "background": "Project directory: ${PROJECT_DIR_ESCAPED}. Start time: ${START_TIME_ESCAPED}. Files: ${FILE_COUNT}. CLAUDE.md files: ${CLAUDE_MD_COUNT}. Recent commits: ${RECENT_COMMITS_ESCAPED}. Current commit: ${GIT_COMMIT_ESCAPED}.",
   "importance": "normal"
 }
 RECORD_EOF
